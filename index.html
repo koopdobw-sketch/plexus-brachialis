@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1215">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plexus">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script>
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+</head>
+<body>
+<title>Plexus brachialis Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: Arbeitsfläche wie ein Taschenatlas – große Zeichnung links, Befundspalte rechts. Farbe trägt Bedeutung: Faszikel, LA-Abdeckung, Risiko. */
+:root{
+  --bg:#F1F4F4;--surf:#FFFFFF;--surf2:#E7ECEC;--ink:#14201F;--muted:#566664;--line:#CFD8D7;
+  --lat:#0B7D70;--post:#B3620A;--med:#7446BC;--blue:#1F55D0;--blue-soft:#DCE6FB;--red:#C42D26;--red-soft:#FADFDC;--ok:#1B7F45;
+  --art:#C4372F;--vein:#3A62B8;--skin:#E9E2DA;--skin-line:#B8ADA0;--bone:#F7F3E8;--bone-line:#9C927C;--muscle:#D9A79B;--muscle-line:#A86E60;--ext:#6F7D7B;
+  --us-bg:#141413;--us-fat:#4F4E4A;--us-muscle:#393836;--us-line:#E8E6DE;--us-label:#FFE680;--us-pick:#5CE1FF;--us-text:#EDEBE3;
+  --f-d:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;--f-b:"Figtree","Segoe UI",system-ui,sans-serif;--f-m:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1514;--surf:#172120;--surf2:#202C2A;--ink:#E6EEEC;--muted:#96A7A4;--line:#2E3C3A;
+  --lat:#3FCBB6;--post:#EBA63F;--med:#B493EF;--blue:#7DA6FF;--blue-soft:#1C2C55;--red:#FF7D72;--red-soft:#451D1A;--ok:#5AD08B;
+  --art:#E8675E;--vein:#7296E6;--skin:#2A2E2B;--skin-line:#515A55;--bone:#4A483F;--bone-line:#8F8B78;--muscle:#5E3C36;--muscle-line:#94645A;--ext:#93A3A0;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1514;--surf:#172120;--surf2:#202C2A;--ink:#E6EEEC;--muted:#96A7A4;--line:#2E3C3A;
+  --lat:#3FCBB6;--post:#EBA63F;--med:#B493EF;--blue:#7DA6FF;--blue-soft:#1C2C55;--red:#FF7D72;--red-soft:#451D1A;--ok:#5AD08B;
+  --art:#E8675E;--vein:#7296E6;--skin:#2A2E2B;--skin-line:#515A55;--bone:#4A483F;--bone-line:#8F8B78;--muscle:#5E3C36;--muscle-line:#94645A;--ext:#93A3A0;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-b);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1440px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline;padding-block:18px 8px}
+h1{font:700 clamp(23px,3vw,31px)/1.1 var(--f-d);margin:0;letter-spacing:-.015em}
+header.top p{margin:0;color:var(--muted);flex:1 1 320px;min-width:0}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);display:flex;gap:2px;overflow-x:auto;border-bottom:2px solid var(--line);margin-bottom:14px}
+nav.tabs button{all:unset;cursor:pointer;padding:10px 14px;font-weight:600;color:var(--muted);white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--blue)}
+nav.tabs button:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media (max-width:1080px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:60px;max-height:calc(100vh - 76px);overflow:auto}
+@media (max-width:1080px){.side{position:static;max-height:none}}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.fig{background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:8px;overflow-x:auto;min-width:0}
+.fig svg{display:block;width:100%;height:auto}
+.fig.schema svg{min-width:760px}.fig.anat svg{min-width:680px}
+.bar{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-bottom:10px}
+.bar .lbl{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.chip{all:unset;cursor:pointer;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surf);font-size:13.5px;font-weight:600}
+.chip:hover{border-color:var(--ink)}.chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:var(--surf)}
+label.tg{display:inline-flex;gap:6px;align-items:center;font-size:13.5px;cursor:pointer}
+h2{font:700 21px/1.2 var(--f-d);margin:0 0 6px;text-wrap:balance}
+h3{font:600 12px/1.3 var(--f-b);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+h3:first-child{margin-top:0}
+p{margin:0 0 8px}ul{margin:0 0 8px;padding-left:18px}li{margin-bottom:3px}
+.note{font-size:13px;color:var(--muted)}
+.warn{background:var(--red-soft);border-left:3px solid var(--red);padding:7px 10px;font-size:14px;margin-block:8px}
+.tip{background:var(--blue-soft);border-left:3px solid var(--blue);padding:7px 10px;font-size:14px;margin-block:8px}
+.segs{display:flex;gap:3px;margin-block:6px}
+.segs span{font:700 12px var(--f-m);padding:3px 7px;border-radius:3px;background:var(--surf2);color:var(--muted);opacity:.55}
+.segs span.on{background:var(--ink);color:var(--surf);opacity:1}
+.tag{font:700 11px var(--f-m);letter-spacing:.03em;padding:2px 6px;border-radius:3px;background:var(--surf2);color:var(--muted)}
+.reach{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13.5px}
+.reach button{all:unset;cursor:pointer}.reach button:hover{text-decoration:underline}
+.st{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--blue);vertical-align:-1px}
+.st.F{background:var(--blue)}.st.P{background:linear-gradient(90deg,var(--blue) 50%,transparent 50%)}.st.N{border-color:var(--line)}.st.S{border-color:var(--red);background:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px}
+/* Schema */
+svg text{font-family:var(--f-b);fill:var(--ink)}
+.col-h{font:700 12px var(--f-b);letter-spacing:.05em;text-transform:uppercase;fill:var(--muted);cursor:pointer;text-anchor:middle}
+.col-h:hover,.col-h.on{fill:var(--blue)}
+.band{fill:var(--blue);opacity:0;transition:opacity .15s}.band.on{opacity:.08}
+.rul rect{fill:var(--surf2);stroke:var(--line);cursor:pointer}
+.rul text{font:600 11.5px var(--f-b);text-anchor:middle;cursor:pointer;fill:var(--muted)}
+.rul.on rect{fill:var(--blue);stroke:var(--blue)}.rul.on text{fill:var(--surf)}
+.ed{fill:none;stroke:var(--c,var(--muted));stroke-width:2.2;transition:opacity .15s}
+.nd{cursor:pointer;transition:opacity .15s}
+.nd circle,.nd rect{fill:var(--surf);stroke:var(--c,var(--ink));stroke-width:2.2}
+.nd.dt circle{fill:var(--c,var(--ink))}
+.nd text{font-size:13.5px}.nd .major{font-weight:700}.nd .in{font-weight:700;text-anchor:middle;dominant-baseline:central;font-size:13px}
+.nd.dv text{font:700 10.5px var(--f-m);text-anchor:middle;dominant-baseline:central}
+.nd.dv.pp circle{fill:var(--ink)}.nd.dv.pp text{fill:var(--surf)}
+.nd:hover circle,.nd:hover rect{stroke-width:3.4}
+.c-lat{--c:var(--lat)}.c-post{--c:var(--post)}.c-med{--c:var(--med)}.c-ext{--c:var(--ext)}
+.ext circle{stroke-dasharray:3 2}
+.cov-F{--c:var(--blue)}.cov-P{--c:var(--blue)}.cov-S{--c:var(--red)}
+.cov-N{opacity:.22}
+.ed.cov-F,.ap.cov-F{stroke-width:4}.ed.cov-P,.ap.cov-P{stroke-dasharray:7 5;stroke-width:3}.ed.cov-S,.ap.cov-S{stroke-width:4}
+.nd.cov-F circle,.nd.cov-F rect{fill:var(--blue-soft)}
+.nd.cov-S circle{fill:var(--red-soft)}
+.lit{opacity:1!important}.ed.lit,.ap.lit{stroke-width:4.5}
+.nd.lit circle,.nd.lit rect{stroke-width:3.2}
+.dim{opacity:.13!important}
+.nd.sel circle,.nd.sel rect{stroke-width:4.4;filter:drop-shadow(0 0 3px var(--c,var(--ink)))}
+.nd.sel text{font-weight:700}
+.blind .lab{display:none}.blind .nd.rv .lab{display:inline}
+.nd.q-right circle,.nd.q-right rect{stroke:var(--ok);fill:var(--ok);stroke-width:4}.nd.q-wrong circle,.nd.q-wrong rect{stroke:var(--red);fill:var(--red);stroke-width:4}
+/* Anatomie */
+.a-skin{fill:var(--skin);stroke:var(--skin-line);stroke-width:1.5}
+.a-bone{fill:var(--bone);stroke:var(--bone-line);stroke-width:1.5}
+.a-musc{fill:var(--muscle);stroke:var(--muscle-line);stroke-width:1.2;opacity:.82}
+.a-art{fill:none;stroke:var(--art);stroke-width:9;stroke-linecap:round}.a-art.th{stroke-width:5}
+.a-vein{fill:none;stroke:var(--vein);stroke-width:10;stroke-linecap:round;opacity:.72}
+.a-lab{font-size:12px;fill:var(--muted);font-style:italic;paint-order:stroke;stroke:var(--surf);stroke-width:3px;pointer-events:none}
+.n-lab{font-size:12.5px;font-weight:700;paint-order:stroke;stroke:var(--skin);stroke-width:3.5px;pointer-events:none;fill:var(--c,var(--ink))}
+.ap{fill:none;stroke:var(--c,var(--ink));stroke-width:3.4;stroke-linecap:round;transition:opacity .15s}
+.ap.back{stroke-dasharray:2 7}.ap.cov-P.back{stroke-dasharray:2 7}
+.hit{fill:none;stroke:transparent;stroke-width:15;cursor:pointer;pointer-events:stroke}
+.stop{cursor:pointer}.stop rect{fill:var(--surf);stroke:var(--ink);stroke-width:1.6}.stop circle{fill:var(--ink)}.stop text{fill:var(--surf);font:700 12px var(--f-m);text-anchor:middle;dominant-baseline:central}
+.stop.on rect{fill:var(--blue);stroke:var(--blue)}.stop.on circle{fill:var(--blue)}
+.stop .ln{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3;fill:none}.stop.on .ln{stroke:var(--blue);stroke-width:2.4}
+.hide-muscle .ly-m,.hide-bone .ly-b,.hide-vess .ly-v,.hide-lab .ly-l,.hide-small .minor{display:none}
+.stepper{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.stepper input[type=range]{flex:1 1 200px;min-width:0;accent-color:var(--blue)}
+.stepper button{all:unset;cursor:pointer;border:1px solid var(--line);background:var(--surf);border-radius:4px;padding:3px 11px;font-weight:700}
+.stepper button:hover{border-color:var(--ink)}
+.stops-names{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px}
+.stops-names button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;text-align:center;padding:4px 2px;border-bottom:3px solid var(--line);color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.stops-names button[aria-pressed="true"]{border-color:var(--blue);color:var(--ink)}
+/* Sono */
+.sono{background:var(--us-bg);border-radius:6px;padding:8px;color:var(--us-text)}
+.sono svg{display:block;width:100%;height:auto}
+.sono svg text{fill:var(--us-text)}
+.sono .ori{font:700 11px var(--f-m);fill:var(--us-label);letter-spacing:.03em}
+.sono .dep{font:500 10px var(--f-m);fill:var(--us-text)}
+.u{cursor:pointer}.u .sh{stroke:var(--us-line);stroke-width:1.1}
+.u.muscle .sh{fill:url(#mus);stroke-width:1.2}.u.fat .sh{fill:var(--us-fat);stroke:none}
+.u.art .sh{fill:#040404;stroke-width:3}.u.vein .sh{fill:#0B0B0B;stroke-width:1.2}
+.u.root .sh{fill:#070707;stroke-width:1.6}.u.hc .sh{fill:url(#hc);stroke-width:1.8}
+.u.bone .sh{fill:none;stroke-width:4.5;stroke-linecap:round}.u.pleura .sh{fill:none;stroke-width:2.6;stroke-dasharray:14 3}.u.ten .sh{fill:none;stroke-width:3.4;stroke-linecap:round}
+.u .ht{fill:transparent;stroke:transparent;stroke-width:9}
+.u:hover .sh{stroke:var(--us-pick)}
+.u.pk .sh{stroke:var(--us-pick);stroke-width:3.6}.u.q-right .sh{stroke:#58E08B;stroke-width:4}.u.q-wrong .sh{stroke:#FF6E63;stroke-width:4}
+.u-lab{font:600 12.5px var(--f-b);fill:var(--us-label)!important;paint-order:stroke;stroke:#000;stroke-width:3px;pointer-events:none}
+.nolab .u-lab{display:none}
+.needle{display:none}.show-needle .needle{display:block}
+.needle line{stroke:#F2F2F2;stroke-width:2.6;stroke-linecap:round}
+.la{fill:#7FC4FF;opacity:.33;stroke:#BFE4FF;stroke-width:1}
+.show-needle .nd-move{animation:nd 1.6s ease-out both}
+@keyframes nd{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.u.art .sh{transform-box:fill-box;transform-origin:center;animation:pulse 1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.u.art .sh,.show-needle .nd-move{animation:none}}
+/* Blöcke */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+.stack{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
+.an-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1180px){.an-grid{grid-template-columns:minmax(0,1fr)}}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:700}
+td:first-child,th:first-child{text-align:left;font-weight:600}
+td.l,th.l{text-align:left;font-weight:400}
+tbody tr.act{background:var(--blue-soft)}
+tbody tr.clk{cursor:pointer}tbody tr.clk:hover{background:var(--surf2)}
+.r{stroke:var(--line);stroke-width:1;cursor:pointer}
+.r.F{fill:var(--blue)}.r.P{fill:url(#ph)}.r.N{fill:var(--surf2)}
+.r:hover{stroke:var(--ink);stroke-width:2}.r.pk{stroke:var(--ink);stroke-width:2.6}
+.finder{display:grid;gap:6px;margin-top:8px}
+.fd-ans{background:var(--surf2);padding:10px 12px;border-radius:4px;font-size:14.5px}
+/* Quiz */
+.q-opts{display:grid;gap:6px;margin-block:10px}
+.q-opts button{all:unset;cursor:pointer;padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:var(--surf);overflow-wrap:anywhere}
+.q-opts button:hover:not([disabled]){border-color:var(--ink)}
+.q-opts button.right{background:var(--ok);border-color:var(--ok);color:var(--surf)}.q-opts button.wrong{background:var(--red);border-color:var(--red);color:var(--surf)}
+.q-opts button[disabled]{cursor:default}
+.btn{all:unset;cursor:pointer;background:var(--blue);color:var(--surf);padding:7px 14px;border-radius:4px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
+.score{font:700 13px var(--f-m);color:var(--muted)}
+.ask{font:600 18px/1.35 var(--f-d);margin-block:4px 8px;text-wrap:balance}
+.foot{margin-top:18px;font-size:13px;color:var(--muted)}
+.foot ol{padding-left:20px;margin:6px 0}.foot a{color:var(--blue)}
+sup{font-size:.72em;color:var(--blue)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Plexus brachialis Atlas</h1>
+  <p>Von der Wurzel bis zum Endast, jeweils mit der Frage: Was erreiche ich an welcher Stichhöhe, was bleibt aus, was riskiere ich?</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Ansichten">
+  <button role="tab" data-tab="schema">Schema</button>
+  <button role="tab" data-tab="anatomie">Anatomie &amp; Sono</button>
+  <button role="tab" data-tab="bloecke">Blöcke</button>
+  <button role="tab" data-tab="quiz">Quiz</button>
+</nav>
+<main id="view"></main>
+<footer class="foot">
+  <strong>Lernhilfe, keine Handlungsanweisung.</strong> Zeichnungen sind schematisch und nicht maßstäblich, die Sono-Ansichten sind Schemazeichnungen und keine echten Bilder. Volumina sind Richtwerte; es gelten deine Klinik-SOP, Maximaldosen und die Supervision. Variationen des Plexus sind häufig.
+  <ol>
+    <li>Renes SH et al. Reg Anesth Pain Med 2009;34:498. <a href="https://doi.org/10.1097/AAP.0b013e3181b49256" target="_blank" rel="noopener">DOI</a></li>
+    <li>Kessler J et al. Reg Anesth Pain Med 2008;33:545. <a href="https://pubmed.ncbi.nlm.nih.gov/19258969/" target="_blank" rel="noopener">PubMed</a></li>
+    <li>Hong B et al. Sci Rep 2021;11:18749. <a href="https://doi.org/10.1038/s41598-021-97843-x" target="_blank" rel="noopener">DOI</a></li>
+    <li>Tran DQ et al. Reg Anesth Pain Med 2019 (Diaphragm-sparing blocks). <a href="https://doi.org/10.1136/rapm-2019-100908" target="_blank" rel="noopener">DOI</a></li>
+    <li>Neal JM et al. Reg Anesth Pain Med 2018;43:113 (LAST). <a href="https://doi.org/10.1097/AAP.0000000000000720" target="_blank" rel="noopener">DOI</a></li>
+  </ol>
+  Zahlen zu Phrenikusparese und Phrenikus-Abstand stammen aus den Abstracts dieser Arbeiten (PubMed). Anatomie und Technik entsprechen dem Lehrbuchstand und wurden nicht einzeln belegt.
+</footer>
+</div>
+
+<script>
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const ALL=['C5','C6','C7','C8','T1'];
+
+/* ---------- Nervenmodell: Position im Schema, Segmente, Eltern, Texte ---------- */
+const N={
+ C5:{l:'C5',full:'Ventralast C5',lv:'root',x:85,y:170,seg:['C5'],p:[],t:'Liegt im Sono am weitesten oberflächlich im interskalenären Stapel. Der N. phrenicus zieht direkt daneben.',blk:'Ziel des ISB, zusammen mit C6. Wurzeln sind fast rein neuronal mit wenig Bindegewebe: außerhalb des Epineuriums injizieren, nie in die Wurzel.',sens:'Dermatom C5: Schulter, lateraler Oberarm.'},
+ C6:{l:'C6',full:'Ventralast C6',lv:'root',x:85,y:250,seg:['C6'],p:[],t:'Im Sono oft zweigeteilt. Der Proc. transversus C6 hat zwei Höcker (Tuberculum anterius und posterius) und dient als Höhenmarke.',blk:'Mittlere Ampel im ISB. Höhe sichern: C6 hat einen prominenten vorderen Höcker, C7 hat keinen.',sens:'Dermatom C6: Daumen, radialer Unterarm.'},
+ C7:{l:'C7',full:'Ventralast C7',lv:'root',x:85,y:330,seg:['C7'],p:[],t:'Bildet allein den Truncus medius. Auf Höhe C7 liegt die A. vertebralis frei vor dem Querfortsatz.',blk:'Beim ISB nur teilweise erfasst. Vor Injektion auf Höhe C7 unbedingt Doppler: A. vertebralis.',sens:'Dermatom C7: Mittelfinger.'},
+ C8:{l:'C8',full:'Ventralast C8',lv:'root',x:85,y:410,seg:['C8'],p:[],t:'Tritt zwischen C7 und T1 aus, läuft tief und ist interskalenär oft nicht darstellbar.',blk:'Bleibt beim ISB meist aus. Darum ist der ISB kein Block für Hand und ulnaren Unterarm.',sens:'Dermatom C8: Kleinfinger, ulnare Hand.'},
+ T1:{l:'T1',full:'Ventralast T1',lv:'root',x:85,y:490,seg:['T1'],p:[],t:'Läuft über die erste Rippe nach oben in den Truncus inferior, direkt neben dem Pleuradom.',blk:'Mit C8 das Sorgenkind aller proximalen Zugänge. Erreicht Lokalanästhetikum den zervikalen Grenzstrang, entsteht ein Horner-Syndrom.',sens:'Dermatom T1: medialer Unterarm.'},
+ ts:{l:'Tr. superior',full:'Truncus superior',lv:'trunk',x:220,y:210,seg:['C5','C6'],p:['C5','C6'],t:'Entsteht aus C5 und C6 am lateralen Rand der Skaleni. Gibt N. suprascapularis und N. subclavius ab.',blk:'Ziel des Superior-Trunk-Blocks. Injektion dort, wo der N. suprascapularis gerade abgeht: guter Schulterblock mit mehr Abstand zum Phrenikus.'},
+ tm:{l:'Tr. medius',full:'Truncus medius',lv:'trunk',x:220,y:330,seg:['C7'],p:['C7'],t:'Reine Fortsetzung von C7. Keine eigenen Äste.',blk:'Liegt supraklavikulär im „Traubenbündel“ lateral der A. subclavia.'},
+ ti:{l:'Tr. inferior',full:'Truncus inferior',lv:'trunk',x:220,y:450,seg:['C8','T1'],p:['C8','T1'],t:'Liegt auf der ersten Rippe, direkt hinter und lateral der A. subclavia. Keine eigenen Äste.',blk:'Liegt in der Ecktasche (Corner Pocket) zwischen Arterie und Rippe. Eine Injektion dort sichert die Ulnaris-Abdeckung beim SCB.'},
+ sa:{l:'a',full:'Divisio anterior des Tr. superior',lv:'div',x:340,y:165,seg:['C5','C6'],p:['ts'],cord:'lat',t:'Vordere Divisionen versorgen Flexoren und laufen zu lateralem und medialem Faszikel.'},
+ sp:{l:'p',full:'Divisio posterior des Tr. superior',lv:'div',x:340,y:235,seg:['C5','C6'],p:['ts'],cord:'post',t:'Hintere Divisionen versorgen Extensoren und bilden gemeinsam den Fasciculus posterior.'},
+ ma:{l:'a',full:'Divisio anterior des Tr. medius',lv:'div',x:340,y:295,seg:['C7'],p:['tm'],cord:'lat',t:'Läuft mit der vorderen Divisio des Tr. superior zum Fasciculus lateralis.'},
+ mp:{l:'p',full:'Divisio posterior des Tr. medius',lv:'div',x:340,y:365,seg:['C7'],p:['tm'],cord:'post',t:'Beiträge C7 zum Fasciculus posterior.'},
+ ip:{l:'p',full:'Divisio posterior des Tr. inferior',lv:'div',x:340,y:425,seg:['C8','T1'],p:['ti'],cord:'post',t:'Beiträge C8 (T1) zum Fasciculus posterior, darum enthält der N. radialis auch untere Segmente.'},
+ ia:{l:'a',full:'Divisio anterior des Tr. inferior',lv:'div',x:340,y:495,seg:['C8','T1'],p:['ti'],cord:'med',t:'Setzt sich allein als Fasciculus medialis fort.'},
+ lat:{l:'Fasc. lateralis',full:'Fasciculus lateralis',lv:'cord',x:480,y:230,seg:['C5','C6','C7'],p:['sa','ma'],cord:'lat',t:'Liegt infraklavikulär kranial-lateral der A. axillaris. Äste: N. pectoralis lateralis, N. musculocutaneus, laterale Medianuswurzel.',blk:'Im Parasagittalschnitt kranial der Arterie, etwa 9–10 Uhr. Die Nadel kommt von kranial genau hier vorbei: Spitze während des Vorschubs immer sichtbar halten.'},
+ post:{l:'Fasc. posterior',full:'Fasciculus posterior',lv:'cord',x:480,y:365,seg:ALL,p:['sp','mp','ip'],cord:'post',t:'Liegt hinter der A. axillaris. Äste: Nn. subscapulares, N. thoracodorsalis, N. axillaris, N. radialis.',blk:'Zielpunkt der Single-Shot-Infraklavikulär-Technik liegt dorsal der Arterie auf 6 Uhr: hier beginnt die U-förmige Ausbreitung um die Arterie.'},
+ medc:{l:'Fasc. medialis',full:'Fasciculus medialis',lv:'cord',x:480,y:490,seg:['C8','T1'],p:['ia'],cord:'med',t:'Liegt kaudal-dorsal der Arterie, oft zwischen Arterie und Vene. Äste: N. pectoralis medialis, Hautäste an Ober- und Unterarm, N. ulnaris, mediale Medianuswurzel.',blk:'Am schlechtesten zu sehen. Ausbleibende Ulnaris-Wirkung nach Infraklavikulär-Block: Lokalanästhetikum hat die Rückseite der Arterie nicht erreicht.'},
+ phr:{l:'N. phrenicus',full:'N. phrenicus (C3–C5)',lv:'coll',x:150,y:128,seg:['C5'],p:['C5'],side:1,t:'Bekommt aus C5 nur seinen Beitrag, Hauptwurzel C4. Läuft auf dem M. scalenus anterior von lateral nach medial.',m:'Zwerchfell',blk:'Auf Höhe des Krikoids nur etwa 2 mm von C5 entfernt, pro cm nach kaudal rund 3 mm mehr Abstand.[2] Das ist die Mechanik hinter jeder Hemidiaphragmaparese.',test:'Sono: Zwerchfellexkursion in Rückenlage, Thoraxröntgen zeigt Hochstand. Klinik: Dyspnoe, Abfall von FEV1/FVC.'},
+ dscap:{l:'N. dorsalis scapulae',full:'N. dorsalis scapulae',lv:'coll',x:55,y:96,seg:['C5'],p:['C5'],side:1,t:'Aus C5, durchbohrt den M. scalenus medius.',m:'Mm. rhomboidei, M. levator scapulae',blk:'Liegt beim dorsalen In-Plane-Zugang im Nadelweg durch den M. scalenus medius. Im Sono als kleine runde Struktur suchen und umgehen.'},
+ lt:{l:'N. thoracicus longus',full:'N. thoracicus longus',lv:'coll',x:35,y:560,seg:['C5','C6','C7'],p:['C5','C6','C7'],side:1,t:'Aus C5–C7, Anteile durchbohren den M. scalenus medius, zieht dann auf dem M. serratus anterior nach kaudal.',m:'M. serratus anterior',blk:'Wie der N. dorsalis scapulae im Nadelweg beim dorsalen ISB. Verletzung führt zur Scapula alata.'},
+ ssn:{l:'N. suprascapularis',full:'N. suprascapularis',lv:'coll',x:300,y:85,seg:['C5','C6'],p:['ts'],t:'Aus dem Tr. superior, zieht durch die Incisura scapulae in die Fossa supra- und infraspinata.',m:'Mm. supra- und infraspinatus',sens:'Rund 70 % der Schultergelenkkapsel (hinten und oben)',blk:'Der wichtigste Schmerznerv der Schulter. Verlässt den Plexus früh: Beim SCB nicht sicher erfasst, infraklavikulär und axillär nie.',test:'Außenrotation und Abduktionsbeginn'},
+ subcl:{l:'N. subclavius',full:'N. subclavius',lv:'coll',x:320,y:122,seg:['C5','C6'],p:['ts'],minor:1,t:'Kleiner Ast aus dem Tr. superior.',m:'M. subclavius',blk:'Für Blöcke unwichtig. Kann als akzessorischer Phrenikus Fasern führen und ist eine mögliche Erklärung für Paresen nach weiter distalen Blöcken.'},
+ lpect:{l:'N. pectoralis lat.',full:'N. pectoralis lateralis',lv:'term',x:660,y:95,seg:['C5','C6','C7'],p:['lat'],cord:'lat',minor:1,m:'M. pectoralis major',blk:'Liegt im PECS-I-Zielraum. Die A. thoracoacromialis läuft mit und ist die sonographische Landmarke.'},
+ mcn:{l:'N. musculocutaneus',full:'N. musculocutaneus',lv:'term',x:660,y:155,seg:['C5','C6','C7'],p:['lat'],cord:'lat',major:1,t:'Verlässt das Gefäß-Nerven-Bündel früh, durchbohrt den M. coracobrachialis und endet als N. cutaneus antebrachii lateralis.',m:'Mm. coracobrachialis, biceps, brachialis',sens:'Über den N. cutaneus antebrachii lat.: radialer Unterarm',blk:'Liegt axillär außerhalb der Gefäßscheide, zwischen Biceps und Coracobrachialis oder im Coracobrachialis. Immer separat blocken.',test:'Pull: Ellenbogenbeugung gegen Widerstand. Hautprüfung: radialer Unterarm.'},
+ ssub:{l:'N. subscapularis sup.',full:'N. subscapularis superior',lv:'term',x:660,y:215,seg:['C5','C6'],p:['post'],cord:'post',minor:1,m:'M. subscapularis (oberer Anteil)',blk:'Sensibel Anteil an der vorderen Schulterkapsel.'},
+ thd:{l:'N. thoracodorsalis',full:'N. thoracodorsalis',lv:'term',x:660,y:255,seg:['C6','C7','C8'],p:['post'],cord:'post',minor:1,m:'M. latissimus dorsi',blk:'Für den Block selten relevant. Zugehörige Sehne bildet mit dem Teres major die Conjoint Tendon als axilläre Landmarke.'},
+ isub:{l:'N. subscapularis inf.',full:'N. subscapularis inferior',lv:'term',x:660,y:295,seg:['C5','C6'],p:['post'],cord:'post',minor:1,m:'M. subscapularis (unterer Anteil), M. teres major'},
+ ax:{l:'N. axillaris',full:'N. axillaris',lv:'term',x:660,y:340,seg:['C5','C6'],p:['post'],cord:'post',major:1,t:'Verlässt die Achsel durch die laterale Achsellücke (Quadrilateral Space) um das Collum chirurgicum, zusammen mit der A. circumflexa humeri posterior.',m:'Mm. deltoideus, teres minor',sens:'Über den N. cut. brachii lat. sup.: Fläche über dem Deltoideus. Rund 30 % der Schulterkapsel (vorne, unten)',blk:'Beim axillären Block nicht erfasst, weil er zu hoch abgeht. Einzelblock von dorsal in der lateralen Achsellücke möglich.',test:'Abduktion im Schultergelenk, Regimentsabzeichen-Areal.'},
+ rad:{l:'N. radialis',full:'N. radialis',lv:'term',x:660,y:400,seg:ALL,p:['post'],cord:'post',major:1,t:'Größter Ast des Fasciculus posterior. Zieht hinter die A. axillaris/brachialis, dann in den Sulcus radialis um den Humerus.',m:'Trizeps, alle Extensoren an Unter- und Oberarm, Mm. brachioradialis, supinator',sens:'Posteriorer Ober- und Unterarm, radialer Handrücken',blk:'Axillär meist auf 5–6 Uhr, tief der Arterie, direkt auf der Conjoint Tendon. Zuerst blocken, sonst schiebt das Lokalanästhetikum ihn aus dem Bild.',test:'Push: Ellenbogenstreckung gegen Widerstand. Haut: erste Interdigitalfalte dorsal.'},
+ mn:{l:'N. medianus',full:'N. medianus',lv:'term',x:660,y:470,seg:ALL,p:['lat','medc'],cord:'mix',major:1,t:'Entsteht aus lateraler und medialer Wurzel: die Medianusgabel liegt ventral der A. axillaris. Keine Äste am Oberarm.',m:'Pronatoren, die meisten Fingerbeuger, Thenar (M. opponens, abductor pollicis brevis)',sens:'Palmar Daumen bis radialer Ringfinger, dorsal die Fingerspitzen II, III und radial IV',blk:'Axillär meist auf 10–11 Uhr, oberflächlich-lateral. Am Unterarm honigwabenartig zwischen FDS und FDP: ideal für Rescue.',test:'Pinch: Daumen auf Zeigefinger, Opposition gegen Widerstand. Haut: Zeigefingerkuppe palmar.'},
+ un:{l:'N. ulnaris',full:'N. ulnaris',lv:'term',x:660,y:530,seg:['C8','T1'],p:['medc'],cord:'med',major:1,t:'Läuft medial der Arterie, durchbricht das Septum und zieht hinter dem Epicondylus medialis (Sulcus) zum Unterarm.',m:'M. flexor carpi ulnaris, ulnarer FDP, Hypothenar, Mm. interossei, M. adductor pollicis',sens:'Ulnarer Hand: Finger V und ulnare Hälfte IV, palmar und dorsal',blk:'Axillär meist auf 1–2 Uhr, oberflächlich-medial neben den Venen. Wird beim ISB fast immer ausgelassen. Am Unterarm direkt medial der A. ulnaris.',test:'Pinch: Finger spreizen, Kleinfinger gegen Widerstand abduzieren. Haut: Kleinfingerkuppe.'},
+ mabc:{l:'N. cut. antebrachii med.',full:'N. cutaneus antebrachii medialis',lv:'term',x:660,y:580,seg:['C8','T1'],p:['medc'],cord:'med',sens:'Medialer Unterarm',blk:'Liegt axillär subkutan oberflächlich zum Bündel. Wichtig bei Shunt-OPs: sonst Schmerzen am medialen Unterarm.'},
+ mbc:{l:'N. cut. brachii med.',full:'N. cutaneus brachii medialis',lv:'term',x:660,y:620,seg:['C8','T1'],p:['medc'],cord:'med',minor:1,sens:'Medialer Oberarm, distal',blk:'Mit dem N. intercostobrachialis zuständig für Blutsperrenschmerz. Subkutane Infiltration im Achselbereich.'},
+ mpect:{l:'N. pectoralis med.',full:'N. pectoralis medialis',lv:'term',x:660,y:660,seg:['C8','T1'],p:['medc'],cord:'med',minor:1,m:'Mm. pectoralis major und minor',blk:'Durchbohrt den M. pectoralis minor. Liegt im Zielraum von PECS I.'},
+ lacn:{l:'N. cut. antebrachii lat.',full:'N. cutaneus antebrachii lateralis',lv:'dist',x:860,y:155,seg:['C6','C7'],p:['mcn'],cord:'lat',sens:'Radialer Unterarm',blk:'Endast des N. musculocutaneus. Lateral der Bizepssehne in der Ellenbeuge. Teil der Rescue-Option bei inkomplettem Block.'},
+ ulbc:{l:'N. cut. brachii lat. sup.',full:'N. cutaneus brachii lateralis superior',lv:'dist',x:860,y:340,seg:['C5','C6'],p:['ax'],cord:'post',sens:'Regimentsabzeichen über dem Deltoideus'},
+ pacn:{l:'N. cut. antebrachii post.',full:'N. cutaneus antebrachii posterior',lv:'dist',x:860,y:375,seg:['C5','C6','C7','C8'],p:['rad'],cord:'post',sens:'Mitte Unterarmrückseite',blk:'Zweigt schon am Oberarm ab: distaler Radialis-Rescue-Block erfasst ihn nicht.'},
+ rsup:{l:'R. superficialis n. radialis',full:'R. superficialis n. radialis',lv:'dist',x:860,y:405,seg:['C6','C7','C8'],p:['rad'],cord:'post',sens:'Radialer Handrücken, Daumen und proximale Finger',blk:'Am Unterarm lateral der A. radialis. Rein sensibel: Sono-Rescue ohne motorische Folgen.'},
+ pin:{l:'N. interosseus post.',full:'N. interosseus posterior',lv:'dist',x:860,y:435,seg:['C7','C8'],p:['rad'],cord:'post',m:'Fingerstrecker, M. extensor carpi ulnaris',blk:'Radialer Motorast. Fallhand-Prüfung nach axillärem Block.'},
+ ain:{l:'N. interosseus ant.',full:'N. interosseus anterior',lv:'dist',x:860,y:475,seg:['C8','T1'],p:['mn'],cord:'mix',m:'FPL, radialer FDP, M. pronator quadratus',blk:'Rein motorisch. Prüfung: „OK-Zeichen“ von Daumen und Zeigefinger.'},
+ rdu:{l:'R. dorsalis n. ulnaris',full:'R. dorsalis n. ulnaris',lv:'dist',x:860,y:530,seg:['C8','T1'],p:['un'],cord:'med',sens:'Ulnarer Handrücken',blk:'Geht rund 5 cm proximal des Handgelenks ab. Ein Handgelenksblock proximal davon setzen, sonst bleibt der Handrücken wach.'},
+ scl:{l:'Nn. supraclaviculares',full:'Nn. supraclaviculares (C3/C4)',lv:'ext',x:860,y:95,seg:[],p:[],cord:'ext',ext:1,sens:'Schulterkappe, Haut über der Klavikula, vorderes Schulterportal',blk:'Nicht Plexus brachialis, sondern Plexus cervicalis. Fehlt bei Klavikula-OPs und Hautschnitten: oberflächlicher Zervikalblock als Ergänzung.'},
+ icb:{l:'N. intercostobrachialis',full:'N. intercostobrachialis (T2)',lv:'ext',x:860,y:620,seg:[],p:[],cord:'ext',ext:1,sens:'Medialer Oberarm proximal, Achsel',blk:'Kein Plexusast. Kein Plexusblock erreicht ihn. Für die Blutsperre: subkutaner Halbring an der Achselfalte.'}
+};
+const BY_ORDER=['C5','C6','C7','C8','T1','ts','tm','ti','sa','sp','ma','mp','ip','ia','lat','post','medc','phr','dscap','lt','ssn','subcl','lpect','mcn','ssub','thd','isub','ax','rad','mn','un','mabc','mbc','mpect','lacn','ulbc','pacn','rsup','pin','ain','rdu','scl','icb'];
+const LEVELS={
+ root:{t:'Wurzeln (Radices)',x:85,where:'Ventraläste C5–T1, zwischen M. scalenus anterior und medius (Skalenuslücke).',key:'Äste schon hier: N. dorsalis scapulae, N. thoracicus longus, Beitrag zum N. phrenicus.',block:'Interskalenärer Block. Ampelzeichen C5–C6–C7.'},
+ trunk:{t:'Trunci',x:220,where:'Laterales Halsdreieck, über der ersten Rippe. C5+C6 oben, C7 Mitte, C8+T1 unten.',key:'Abgang N. suprascapularis und N. subclavius aus dem Tr. superior.',block:'Superior-Trunk-Block und Supraklavikulärer Block.'},
+ div:{t:'Divisiones',x:340,where:'Hinter der Klavikula. Jeder Truncus teilt sich in vorne (Flexoren) und hinten (Extensoren).',key:'Keine Äste. Hintere Divisionen werden zum Fasc. posterior.',block:'Supraklavikulär: Divisionen liegen dicht am Bündel, das Volumen erreicht sie gemeinsam.'},
+ cord:{t:'Fasciculi',x:480,where:'Unter M. pectoralis minor. Benannt nach ihrer Lage zur A. axillaris: lateral, posterior, medial.',key:'Größte Zahl an Ästen. M-Figur aus lateralem und medialem Faszikel bildet den N. medianus.',block:'Infraklavikulärer Block, Zielpunkt dorsal der Arterie.'},
+ term:{t:'Endäste',x:660,where:'Um die A. axillaris in der Achsel.',key:'5 Hauptäste: musculocutaneus, axillaris, radialis, medianus, ulnaris.',block:'Axillärer Block mit getrennten Injektionen. N. axillaris ist dann schon weg, N. musculocutaneus liegt außerhalb.'},
+ dist:{t:'Distale Äste',x:860,where:'Oberarm, Ellenbeuge, Unterarm und Hand.',key:'Hautäste sind die Lücke vieler Blöcke.',block:'Rescue-Blöcke am Unterarm, Hautinfiltrationen.'}
+};
+const cls=id=>{const c=N[id].cord;return c==='lat'?'c-lat':c==='post'?'c-post':c==='med'?'c-med':c==='ext'?'c-ext':''};
+
+/* ---------- Blöcke ---------- */
+const BLOCKS={
+ isb:{n:'Interskalenär',s:'ISB',stop:0,lv:'Wurzeln C5–C7',for:'Schulter, proximaler Humerus, laterale Klavikula',
+  pos:'Oberkörper 30°, Kopf zur Gegenseite. Sonde quer auf Höhe Krikoid, von lateral der A. carotis nach außen schieben, alternativ von der Fossa supraclavicularis nach oben verfolgen.',
+  find:['Carotis und V. jugularis zeigen, nach lateral gleiten','M. scalenus ant. und med. identifizieren','Ampel: C5, C6, C7 übereinander','Höhe mit Querfortsatz sichern (C6 mit zwei Höckern)'],
+  nd:'In-plane von lateral (durch M. scalenus medius), Zielpunkt lateral zwischen C5 und C6, außerhalb der Wurzeln.',vol:'5–15 mL',
+  gaps:['N. ulnaris (C8, T1) bleibt aus','Nn. supraclaviculares (C3/4): oberflächlicher Zervikalblock für ventrales Portal','Dorsales Portal (T2/dorsale Rami) kann schmerzen'],
+  risk:['Hemidiaphragmaparese: klassisch fast 100 %, mit 10 mL unter Sono auf Höhe C7 13 %[1]','Horner-Syndrom, Heiserkeit (N. laryngeus recurrens)','A. vertebralis, intrathekal/epidural, seltenes Bezold-Jarisch-Ereignis im Sitzen','Direkte Wurzelverletzung, N. dorsalis scapulae/N. thoracicus longus im Nadelweg'],
+  tip:'Bei schwerer COPD, kontralateraler Phrenikusparese oder Lungenresektion Alternative wählen: Superior Trunk, SSN+Axillaris oder Kombination.',
+  cov:{C5:'F',C6:'F',C7:'P',ts:'F',tm:'P',sa:'F',sp:'F',ma:'P',mp:'P',lat:'F',post:'P',ssn:'F',subcl:'F',lpect:'F',mcn:'F',ssub:'F',thd:'P',isub:'F',ax:'F',rad:'P',mn:'P',lacn:'F',ulbc:'F',pacn:'P',rsup:'P',pin:'P',phr:'S',dscap:'P',lt:'P',scl:'P'},pneu:'selten',phr:'hoch, volumenabhängig[1]'},
+ stb:{n:'Superior Trunk',s:'STB',stop:0,lv:'Truncus superior',for:'Schulter, wenn Zwerchfell geschont werden soll',
+  pos:'Wie ISB, Sonde von C5/C6 nach kaudal führen, bis beide Wurzeln zum Truncus zusammenlaufen und der N. suprascapularis abgeht.',
+  find:['C5/C6 interskalenär aufsuchen','Nach kaudal verfolgen: Vereinigung zum Tr. superior','N. suprascapularis als abgehenden Ast erkennen'],
+  nd:'In-plane von lateral, unter die prävertebrale Faszie, Injektion zwischen Tr. superior und Abgang des N. suprascapularis.',vol:'5–15 mL',
+  gaps:['Ulnaris, medialer Unterarm','Nn. supraclaviculares','Nicht zuverlässig für Ellenbogen oder Hand'],
+  risk:['Phrenikusparese seltener als beim ISB, in Studien oft <10 %[4], aber nicht null','Horner, Heiserkeit möglich'],
+  tip:'Auch bei STB das Zwerchfell nicht als sicher geschont abhaken: Bei fehlender Atemreserve Alternativen ohne Lokalanästhetikum in Halsnähe erwägen.',
+  cov:{C5:'P',C6:'P',ts:'F',sa:'F',sp:'F',lat:'P',post:'P',ssn:'F',subcl:'F',lpect:'P',mcn:'F',ssub:'F',isub:'F',ax:'F',rad:'P',mn:'P',lacn:'P',ulbc:'F',rsup:'P',phr:'S'},pneu:'selten',phr:'geringer, oft <10 %[4]'},
+ scb:{n:'Supraklavikulär',s:'SCB',stop:1,lv:'Trunci und Divisionen',for:'Ellenbogen, Unterarm, Hand; als „Spinale des Arms“ bei Oberarm-OPs',
+  pos:'Oberkörper 30°, Kopf zur Gegenseite. Sonde in der Fossa supraclavicularis parallel zur Klavikula, nach kaudal kippen.',
+  find:['A. subclavia pulsierend, darunter erste Rippe mit Schallschatten','Pleura beiderseits der Rippe, gleitend','Traubenbündel lateral-oberflächlich der Arterie','Doppler: A. dorsalis scapulae/transversa colli im Bündel'],
+  nd:'In-plane von lateral nach medial. Erste Injektion in der Ecktasche zwischen Arterie, Rippe und Bündel, zweite oberflächlich im Bündel.',vol:'20–30 mL',
+  gaps:['N. suprascapularis nicht zuverlässig','N. intercostobrachialis','Ulnaris, wenn Ecktasche nicht gefüllt wird'],
+  risk:['Pneumothorax: Nadelspitze und Pleura immer im Bild','Hemidiaphragmaparese: 47,5 % bei 25 mL in einer RCT[3]','Horner, A. subclavia, Gefäße im Bündel','Keine bilateralen Blöcke'],
+  tip:'Rippe als Sicherheitsnetz nutzen: Wenn keine Rippe im Bild ist, sticht die Nadel Richtung Pleura.',
+  cov:{ts:'F',tm:'F',ti:'P',sa:'F',sp:'F',ma:'F',mp:'F',ia:'P',ip:'P',lat:'F',post:'F',medc:'P',ssn:'P',subcl:'P',lpect:'F',mcn:'F',ssub:'F',thd:'F',isub:'F',ax:'F',rad:'F',mn:'F',un:'P',mabc:'P',mbc:'P',mpect:'P',lacn:'F',ulbc:'F',pacn:'F',rsup:'F',pin:'F',ain:'F',rdu:'P',phr:'S'},pneu:'selten, aber relevant',phr:'bis etwa 50 %[3]'},
+ infra:{n:'Infraklavikulär',s:'Infra',stop:2,lv:'Fasciculi',for:'Ellenbogen, Unterarm, Hand; Katheter am besten fixierbar',
+  pos:'Rückenlage. Arm 90° abduzieren und außenrotieren, das hebt die Klavikula und bringt den Plexus nach oben. Sonde parasagittal medial des Proc. coracoideus.',
+  find:['Mm. pectoralis major und minor als zwei Schichten','Darunter A. axillaris, kaudal davon V. axillaris','Faszikel: lateral kranial, posterior hinten, medial kaudal-dorsal','Pleura tief und medial, nicht in den Weg geraten'],
+  nd:'In-plane von kranial, steile Nadel, Ziel hinter der Arterie auf 6 Uhr. U-förmige Ausbreitung um die Arterie anstreben.',vol:'20–30 mL',
+  gaps:['N. suprascapularis','N. intercostobrachialis','N. axillaris variabel','Tief liegend bei Adipositas schwierig'],
+  risk:['Pneumothorax selten','Gefäßpunktion: tief, schlecht komprimierbar','Hemidiaphragmaparese selten. Kostoklavikuläre Variante: 11,4 % gegen 47,5 % beim SCB[3]'],
+  tip:'Kostoklavikulär als Alternative: Die drei Faszikel liegen hier dicht beisammen lateral der Arterie, direkt unter der Klavikula.',
+  cov:{lat:'F',post:'F',medc:'F',lpect:'P',mcn:'F',ssub:'P',thd:'P',isub:'P',ax:'P',rad:'F',mn:'F',un:'F',mabc:'F',mbc:'P',mpect:'P',lacn:'F',ulbc:'P',pacn:'F',rsup:'F',pin:'F',ain:'F',rdu:'F'},pneu:'selten',phr:'selten; kostoklavikulär ~11 %[3]'},
+ ax:{n:'Axillär',s:'Ax',stop:3,lv:'Endäste',for:'Distaler Oberarm, Ellenbogen, Unterarm, Hand, AV-Shunt',
+  pos:'Rückenlage, Arm 90° abduziert, Ellenbogen gebeugt. Sonde quer am Oberarm, möglichst nah der Achsel, wenig Druck.',
+  find:['Arterie zeigen, wenig Druck, damit Venen nicht verschwinden','Medianus 10–11 Uhr, Ulnaris 1–2 Uhr, Radialis 5–6 Uhr','Conjoint Tendon als helle Linie unter dem Bündel','MCN separat zwischen Biceps und Coracobrachialis'],
+  nd:'In-plane von lateral. Zuerst tief (Radialis), dann oberflächlich (Medianus, Ulnaris), zuletzt MCN separat.',vol:'Gesamt 15–25 mL (je Nerv 5–8 mL, MCN 3–5 mL)',
+  gaps:['N. axillaris','N. intercostobrachialis und N. cut. brachii med. (Blutsperre)','MCN, wenn nicht separat'],
+  risk:['Viele Venen: intravasale Injektion, darum wiederholt aspirieren, Druck lösen','Kein Pneumothorax, keine Phrenikusparese'],
+  tip:'Sicherer Standard für Patient:innen mit eingeschränkter Atmung oder bei gerinnungshemmender Therapie, weil komprimierbar.',
+  cov:{mcn:'F',rad:'F',mn:'F',un:'F',mabc:'P',mbc:'P',lacn:'F',pacn:'F',rsup:'F',pin:'F',ain:'F',rdu:'F'},pneu:'nein',phr:'nein'},
+ ssnax:{n:'SSN + N. axillaris',s:'SSN+Ax',stop:null,lv:'Periphere Schulternerven',for:'Schulter-Analgesie mit weitgehender Zwerchfellschonung',
+  pos:'SSN von dorsal in der Fossa supraspinata (oder anterior unter dem M. omohyoideus), N. axillaris von dorsal in der lateralen Achsellücke neben der A. circumflexa humeri posterior.',
+  find:['SSN dorsal: Fossa supraspinata, A. suprascapularis als Marke','N. axillaris: Sonde hinter dem Oberarm längs, Deltoideus und Humerus-Schatten, Pulsation der A. circumflexa'],
+  nd:'Jeweils in-plane. Injektion ist perivaskulär, kein Plexus in Sicht.',vol:'SSN 5–10 mL, Axillaris 5–10 mL',
+  gaps:['Vordere Kapsel teils (N. subscapularis, N. pectoralis lat.)','Nur Analgesie, keine Anästhesie der gesamten Schulter','Kein Arm-Block'],
+  risk:['Anteriorer SSN-Zugang: Phrenikusparese nicht sicher ausgeschlossen[4]','Pneumothorax bei tiefer Nadel in der Fossa supraspinata'],
+  tip:'Für Schulter-OP bei schlechter Lungenfunktion lohnt die Abstimmung mit dem Operateur: Allgemeinanästhesie plus Analgesieblock.',
+  cov:{ssn:'F',ax:'F',ulbc:'F'},pneu:'selten',phr:'gering[4]'},
+ fa:{n:'Unterarm (Rescue)',s:'UA',stop:4,lv:'Distale Nerven',for:'Handchirurgie, Ergänzung bei inkomplettem Block, WALANT-Alternative',
+  pos:'Sonde quer auf der Beugeseite am mittleren Unterarm, Arm supiniert.',
+  find:['Medianus: Honigwabe zwischen FDS und FDP, mittig','Ulnaris: direkt medial der A. ulnaris unter M. flexor carpi ulnaris','Radialis superficialis: lateral der A. radialis unter M. brachioradialis'],
+  nd:'In-plane, je 3–5 mL. Nicht in den Nerv, kleine Volumina genügen.',vol:'3–5 mL pro Nerv',
+  gaps:['Hautäste am Unterarm (MABC, LACN, PACN)','Keine Blutsperrentoleranz am Oberarm'],
+  risk:['Sehr gering. Unbedingt perineural injizieren, Druck beachten'],
+  tip:'Rescue im Blockzentrum: Fehlender Nerv durch Hautprüfung benennen, dann gezielt am Unterarm nachblocken. Maximaldosis des Erstblocks mitrechnen.',
+  cov:{mn:'F',un:'F',rsup:'F',rdu:'F'},pneu:'nein',phr:'nein'}
+};
+const BKEYS=Object.keys(BLOCKS);
+const STOPS=[
+ {id:'isb',name:'Interskalenär',x:195,y:128,ang:-40,target:'C5'},
+ {id:'scb',name:'Supraklavikulär',x:243,y:192,ang:-20,target:'ts'},
+ {id:'infra',name:'Infraklavikulär',x:398,y:272,ang:70,target:'post'},
+ {id:'ax',name:'Axillär',x:545,y:285,ang:90,target:'mn'},
+ {id:'fa',name:'Unterarm',x:890,y:262,ang:90,target:'mn'}
+];
+
+/* ---------- Abhängigkeiten ---------- */
+const children={};BY_ORDER.forEach(i=>children[i]=[]);BY_ORDER.forEach(i=>N[i].p.forEach(p=>children[p].push(i)));
+const inter=(a,b)=>a.some(x=>b.includes(x));
+function litSet(id){
+  const out=new Set([id]);const s=N[id].seg;if(!s.length)return out;
+  const up=i=>N[i].p.forEach(p=>{if(inter(N[p].seg,s)&&!out.has(p)){out.add(p);up(p)}});
+  const dn=i=>children[i].forEach(c=>{if(inter(N[c].seg,s)&&!out.has(c)){out.add(c);dn(c)}});
+  up(id);dn(id);return out;
+}
+
+/* ---------- Zustand ---------- */
+const state={tab:'schema',sel:'ax',level:null,block:null,stop:0,labels:true,needle:true,pick:null,cov:false,mapPick:null,finder:'sch',minor:true,layers:{m:true,b:true,v:true,l:true}};
+
+/* ---------- Schema ---------- */
+const HALF={root:19,trunk:46,div:9,cord:56,term:7,dist:6,coll:6,ext:6};
+function edgePath(a,b){
+  const A=N[a],B=N[b];
+  if(b==='lt'){const sx=A.x-19;return`M${sx},${A.y} C${sx-12},${A.y} 35,${A.y+18} 35,${A.y+44} L35,${B.y}`}
+  if(B.lv==='coll'){const h=A.lv==='root'?19:15;return`M${A.x},${A.y-h} C${A.x},${A.y-h-30} ${B.x-34},${B.y} ${B.x-6},${B.y}`}
+  const x1=A.lv==='term'&&B.lv==='dist'?818:A.x+HALF[A.lv],x2=B.x-HALF[B.lv],mx=(x1+x2)/2;
+  return`M${x1},${A.y} C${mx},${A.y} ${mx},${B.y} ${x2},${B.y}`;
+}
+function edgeCls(a,b){
+  const B=N[b],A=N[a];
+  if(B.cord==='mix'&&a==='lat')return'c-lat';if(B.cord==='mix'&&a==='medc')return'c-med';
+  if(A.cord==='mix')return'c-med';
+  if(B.side)return'c-ext';
+  if(['div'].includes(B.lv))return'';
+  return cls(b);
+}
+function schemaSVG(blind){
+  const H=['root','trunk','div','cord','term','dist'];
+  let s=`<svg viewBox="0 0 1060 692" role="img" aria-label="Plexus brachialis schematisch von den Wurzeln C5 bis T1 links über Trunci, Divisiones und Fasciculi bis zu den Endästen rechts" class="${blind?'blind':''}">`;
+  H.forEach(k=>{const L=LEVELS[k];s+=`<rect class="band" data-band="${k}" x="${L.x-(k==='term'?30:k==='dist'?30:62)}" y="64" width="${k==='term'?190:k==='dist'?200:124}" height="625"/>`});
+  if(!blind){
+    [['isb',45,175],['scb',226,180],['infra',415,130],['ax',600,190],['fa',820,230]].forEach(([b,x,w])=>{
+      s+=`<g class="rul" data-rul="${b}"><rect x="${x}" y="6" width="${w}" height="24" rx="3"/><text x="${x+w/2}" y="22">${BLOCKS[b].n}</text></g>`});
+    s+=`<text x="0" y="22" style="font-size:11px;fill:var(--muted);font-weight:700">Höhe</text>`;
+  }
+  H.forEach(k=>{const L=LEVELS[k];s+=`<text class="col-h" data-col="${k}" x="${L.x+(k==='term'||k==='dist'?70:0)}" y="52">${L.t}</text>`});
+  BY_ORDER.forEach(id=>N[id].p.forEach(p=>{const minor=N[id].minor?' minor':'';s+=`<path class="ed ${edgeCls(p,id)}${minor}" data-e="${p}|${id}" d="${edgePath(p,id)}"/>`}));
+  BY_ORDER.forEach(id=>{const n=N[id];const c=cls(id)+(n.minor?' minor':'')+(n.ext?' ext':'');
+    let g=`<g class="nd ${c}" data-id="${id}" tabindex="0" role="button" aria-label="${n.full||n.l}">`;
+    if(n.lv==='root'){g+=`<circle cx="${n.x}" cy="${n.y}" r="19"/><text class="in lab" x="${n.x}" y="${n.y}">${n.l}</text>`}
+    else if(n.lv==='trunk'||n.lv==='cord'){const w=n.lv==='trunk'?92:112;g+=`<rect x="${n.x-w/2}" y="${n.y-15}" width="${w}" height="30" rx="4"/><text class="in lab" x="${n.x}" y="${n.y}">${n.l}</text>`}
+    else if(n.lv==='div'){g=`<g class="nd dv ${n.l==='p'?'pp':''}" data-id="${id}" tabindex="0" role="button" aria-label="${n.full}"><circle cx="${n.x}" cy="${n.y}" r="10"/><text class="lab" x="${n.x}" y="${n.y}">${n.l}</text>`}
+    else{const lx=id==='lt'?n.x-25:n.x+11,ly=id==='lt'?n.y+26:n.y+5;g=g.replace('class="nd ','class="nd dt ');g+=`<circle cx="${n.x}" cy="${n.y}" r="${n.major?7:5.5}"/><text class="lab ${n.major?'major':''}" x="${lx}" y="${ly}">${n.l}</text>`;
+      if(blind)g+=`<rect x="${n.x-10}" y="${n.y-10}" width="20" height="20" fill="transparent" stroke="none" style="fill:transparent;stroke:none"/>`}
+    s+=g+`</g>`});
+  return s+`</svg>`;
+}
+function applyCov(root,block){
+  const cov=block?BLOCKS[block].cov:null;
+  $$('[data-id]',root).forEach(el=>{el.classList.remove('cov-F','cov-P','cov-S','cov-N');if(cov&&!el.classList.contains('hit')&&!el.classList.contains('stop'))el.classList.add('cov-'+(cov[el.dataset.id]||'N'))});
+  $$('[data-e]',root).forEach(el=>{el.classList.remove('cov-F','cov-P','cov-S','cov-N');if(!cov)return;
+    const [a,b]=el.dataset.e.split('|');const ca=cov[a]||'N',cb=cov[b]||'N';
+    if(cb==='S')el.classList.add('cov-S');else if(cb==='N')el.classList.add('cov-N');
+    else if(ca==='N')el.classList.add('cov-N');else el.classList.add('cov-'+(ca==='P'||cb==='P'?'P':'F'))});
+}
+function applyLit(root,sel){
+  const lit=sel?litSet(sel):null;
+  $$('[data-id]',root).forEach(el=>{if(el.classList.contains('hit')||el.classList.contains('stop'))return;el.classList.remove('lit','dim','sel');if(!lit)return;
+    if(lit.has(el.dataset.id)){el.classList.add('lit');if(el.dataset.id===sel)el.classList.add('sel')}else el.classList.add('dim')});
+  $$('[data-e]',root).forEach(el=>{el.classList.remove('lit','dim');if(!lit)return;const[a,b]=el.dataset.e.split('|');
+    if(lit.has(a)&&lit.has(b)&&(!N[sel].seg.length||inter(N[a].seg,N[sel].seg)&&inter(N[b].seg,N[sel].seg)))el.classList.add('lit');else el.classList.add('dim')});
+}
+function blockChips(withOff){
+  return `<div class="bar"><span class="lbl">Block</span>`+(withOff?`<button class="chip" data-block="" aria-pressed="${!state.block}">Aus</button>`:'')+
+   BKEYS.map(b=>`<button class="chip" data-block="${b}" aria-pressed="${state.block===b}">${BLOCKS[b].n}</button>`).join('')+`</div>`;
+}
+const legendCords=`<span><i style="border-color:var(--lat)"></i>Fasc. lateralis</span><span><i style="border-color:var(--post)"></i>Fasc. posterior</span><span><i style="border-color:var(--med)"></i>Fasc. medialis</span>`;
+const legendCov=`<span><i style="border-color:var(--blue)"></i>zuverlässig blockiert</span><span><i style="border-color:var(--blue);border-top-style:dashed"></i>variabel</span><span><i style="border-color:var(--red)"></i>Nebenwirkung/Risiko</span>`;
+function viewSchema(){
+  $('#view').innerHTML=`<div class="grid"><div>
+    ${blockChips(true)}
+    <div class="bar"><label class="tg"><input type="checkbox" id="minor" ${state.minor?'checked':''}> Kleine Äste zeigen</label><span class="note">Klick auf einen Nerv zeigt nur die Segmente, die er wirklich führt. Spaltentitel erklären jede Ebene.</span></div>
+    <div class="fig schema" id="sch">${schemaSVG(false)}</div>
+    <div class="legend" id="leg"></div>
+  </div><aside class="side card" id="panel"></aside></div>`;
+  $('#minor').onchange=e=>{state.minor=e.target.checked;refreshSchema()};
+  refreshSchema();
+}
+function refreshSchema(){
+  const r=$('#sch');if(!r)return;
+  r.classList.toggle('hide-small',!state.minor);
+  applyCov(r,state.block);applyLit(r,state.sel);
+  $$('.band',r).forEach(b=>b.classList.toggle('on',b.dataset.band===state.level));
+  $$('.col-h',r).forEach(b=>b.classList.toggle('on',b.dataset.col===state.level));
+  $$('.rul',r).forEach(b=>b.classList.toggle('on',b.dataset.rul===state.block));
+  $$('.chip[data-block]').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.block||null)===state.block));
+  $('#leg').innerHTML=state.block?legendCov+`<span>Stichhöhe oben markiert. a = anterior, p = posterior</span>`:legendCords+`<span>a = Divisio anterior, p = Divisio posterior</span><span><i style="border-color:var(--ext);border-top-style:dashed"></i>außerhalb des Plexus</span>`;
+  renderPanel();
+}
+function fmt(s){return (s||'').replace(/\[(\d)\]/g,'<sup>[$1]</sup>')}
+function reachHTML(id){
+  return `<div class="reach">`+BKEYS.map(b=>{const st=BLOCKS[b].cov[id]||'N';const txt={F:'zuverlässig',P:'variabel',N:'nein',S:'Risiko'}[st];
+    return `<button data-block="${b}">${BLOCKS[b].n}</button><span><span class="st ${st}" title="${txt}" aria-label="${txt}"></span> ${txt}</span>`}).join('')+`</div>`;
+}
+function nerveHTML(id){
+  const n=N[id];
+  let h=`<h2>${n.full||n.l}</h2>`;
+  if(n.ext)h+=`<span class="tag">außerhalb des Plexus brachialis</span>`;
+  else h+=`<div class="segs">${ALL.map(k=>`<span class="${n.seg.includes(k)?'on':''}">${k}</span>`).join('')}</div>`;
+  if(n.t)h+=`<p>${n.t}</p>`;
+  if(n.m)h+=`<h3>Motorisch</h3><p>${n.m}</p>`;
+  if(n.sens)h+=`<h3>Sensibel</h3><p>${n.sens}</p>`;
+  if(n.blk)h+=`<div class="tip"><strong>Für den Block:</strong> ${fmt(n.blk)}</div>`;
+  if(n.test)h+=`<h3>Wirkung prüfen</h3><p>${n.test}</p>`;
+  h+=`<h3>Erreicht von</h3>${reachHTML(id)}`;
+  return h;
+}
+function renderPanel(){
+  const p=$('#panel');if(!p)return;
+  if(state.level){const L=LEVELS[state.level];p.innerHTML=`<h2>${L.t}</h2><h3>Wo</h3><p>${L.where}</p><h3>Merken</h3><p>${L.key}</p><div class="tip"><strong>Für den Block:</strong> ${L.block}</div><p class="note">Merkhilfe für die Reihenfolge: „Real Teenagers Drink Cold Beer“ (Roots, Trunks, Divisions, Cords, Branches). Klick auf einen Nerv öffnet dessen Details.</p>`;return}
+  if(state.sel){p.innerHTML=nerveHTML(state.sel);return}
+  if(state.block){const B=BLOCKS[state.block];p.innerHTML=blockSummary(B);return}
+  p.innerHTML=`<h2>Plexus brachialis</h2><p>Wähle einen Nerv, eine Ebene oder einen Block.</p>`;
+}
+function blockSummary(B){
+  return `<h2>${B.n}</h2><span class="tag">${B.lv}</span><h3>Geeignet für</h3><p>${B.for}</p><h3>Lücken</h3><ul>${B.gaps.map(x=>`<li>${fmt(x)}</li>`).join('')}</ul><h3>Risiken</h3><ul>${B.risk.map(x=>`<li>${fmt(x)}</li>`).join('')}</ul><div class="tip">${B.tip}</div><p><button class="btn ghost" data-goto="bloecke">Vollständiger Steckbrief</button></p>`;
+}
+
+/* ---------- Anatomie: linke Körperseite von ventral, Arm 90° abduziert ---------- */
+const AP=[
+ {id:'phr',d:'M130,85 C155,105 175,130 190,170 C195,210 170,260 135,340'},
+ {id:'dscap',d:'M150,103 C190,90 240,105 300,135',cl:'back'},
+ {id:'lt',d:'M180,172 C215,250 280,350 350,520',cl:'back'},
+ {id:'C5',d:'M120,92 C150,105 175,120 205,150'},{id:'C6',d:'M115,122 C145,130 180,145 205,150'},
+ {id:'C7',d:'M110,152 C145,160 185,175 215,188'},{id:'C8',d:'M106,182 C140,192 190,210 222,222'},{id:'T1',d:'M100,214 C140,225 190,228 222,222'},
+ {id:'ts',d:'M205,150 C225,160 240,168 258,178'},{id:'tm',d:'M215,188 C235,192 248,196 262,202'},{id:'ti',d:'M222,222 C238,225 252,226 266,226'},
+ {id:'ssn',d:'M240,168 C285,150 330,150 405,160'},{id:'subcl',d:'M232,165 C252,190 268,205 290,216',minor:1},
+ {id:'sa',d:'M258,178 C275,185 300,195 345,232'},{id:'sp',d:'M258,178 C280,195 305,225 350,262'},
+ {id:'ma',d:'M262,202 C285,205 315,215 345,232'},{id:'mp',d:'M262,202 C285,215 315,240 350,262'},
+ {id:'ip',d:'M266,226 C290,235 320,250 350,262'},{id:'ia',d:'M266,226 C290,240 330,270 350,290'},
+ {id:'post',d:'M350,262 C385,270 415,278 455,282',cl:'back',after:1},
+ {id:'ssub',d:'M395,274 C400,295 410,305 430,320',minor:1,cl:'back'},{id:'thd',d:'M415,278 C420,310 440,350 470,395',minor:1,cl:'back'},{id:'isub',d:'M430,280 C440,310 455,335 465,360',minor:1,cl:'back'},
+ {id:'ax',d:'M455,282 C475,270 490,235 505,222 C525,200 555,195 580,205',cl:'back'},{id:'ulbc',d:'M580,205 C600,200 620,195 640,192'},
+ {id:'rad',d:'M455,282 C500,290 540,270 600,255 C680,235 730,232 790,235',cl:'back'},
+ {id:'pacn',d:'M690,235 C740,215 800,205 870,205'},{id:'rsup',d:'M790,235 C860,238 930,245 990,252'},{id:'pin',d:'M790,235 C830,228 860,225 900,228',cl:'back'},
+ {id:'lat',d:'M345,232 C380,245 410,255 450,262'},{id:'medc',d:'M350,290 C385,300 420,305 455,302'},
+ {id:'lpect',d:'M395,253 C400,232 390,215 375,200',minor:1},{id:'mpect',d:'M420,304 C410,320 390,340 370,355',minor:1},
+ {id:'mcn',d:'M450,262 C490,250 530,240 590,235 C650,228 700,225 790,225'},{id:'lacn',d:'M790,225 C850,222 920,222 985,225'},
+ {id:'mn',d:'M450,262 C470,268 485,275 500,282 M455,302 C470,298 485,292 500,282 M500,282 C600,290 720,282 815,268 C870,262 930,262 990,262'},{id:'ain',d:'M830,266 C870,272 910,276 950,278'},
+ {id:'un',d:'M455,302 C520,310 640,310 790,300 C860,295 930,288 990,288'},{id:'rdu',d:'M925,289 C950,298 970,298 990,296'},
+ {id:'mabc',d:'M455,302 C560,325 680,325 830,318'},{id:'mbc',d:'M455,302 C530,335 620,335 680,330',minor:1},
+ {id:'icb',d:'M395,385 C450,375 530,350 620,330',cl:'back'},{id:'scl',d:'M130,70 C180,110 260,160 350,210',cl:'back'}
+];
+const NLAB=[['C5',92,88,'end'],['C6',88,120,'end'],['C7',84,150,'end'],['C8',80,180,'end'],['T1',74,212,'end'],
+ ['ts',232,146,'start'],['ti',232,250,'start'],['ssn',345,145,'start'],['lat',395,240,'start'],['post',342,284,'end'],['medc',342,308,'end'],
+ ['mcn',620,221,'start'],['ax',520,190,'start'],['rad',648,258,'start'],['mn',692,293,'start'],['un',720,322,'start'],['phr',150,330,'start']];
+const NSHORT={post:'Fasc. post.',lat:'Fasc. lat.',medc:'Fasc. med.',ts:'Tr. sup.',ti:'Tr. inf.',ssn:'N. suprascapularis',mcn:'N. musculocutaneus',ax:'N. axillaris',rad:'N. radialis',mn:'N. medianus',un:'N. ulnaris',phr:'N. phrenicus'};
+function anatSVG(){
+  const paths=AP.map(a=>{const c=cls(a.id)+(a.cl?' '+a.cl:'')+(a.minor||N[a.id].minor?' minor':'');
+    return `<path class="ap ${c}" data-id="${a.id}" d="${a.d}"/><path class="hit ${N[a.id].minor?'minor':''}" data-id="${a.id}" d="${a.d}"/>`});
+  return `<svg viewBox="0 0 1000 540" role="img" aria-label="Plexus brachialis in anatomischer Lage, linke Körperseite von ventral, Arm 90 Grad abduziert">
+  <path class="a-skin" d="M70,0 L190,0 L190,90 C260,120 400,140 500,160 C545,168 570,178 600,172 C680,178 780,190 1000,210 L1000,300 C900,310 800,325 700,335 C620,345 560,355 500,375 L470,400 L455,540 L70,540 Z"/>
+  <g class="ly-b"><path class="a-bone" d="M95,235 C170,205 235,205 262,250 C240,285 150,290 90,272 C150,272 215,270 238,248 C215,222 165,228 95,247 Z"/>
+    <path class="a-bone" d="M510,190 C540,175 570,190 565,215 L800,245 L805,270 L555,245 C530,240 510,225 510,190 Z"/>
+    <path class="a-bone" d="M462,215 C472,210 488,214 492,226 C486,238 470,238 462,228 Z"/></g>
+  <g class="ly-m"><path class="a-musc" d="M178,50 L208,48 C235,100 262,170 280,225 L250,232 C235,170 205,100 178,50 Z"/></g>
+  <g class="ly-v"><path class="a-vein" d="M70,320 C130,280 200,270 260,270 C340,290 420,300 470,306 C550,305 640,300 720,295"/></g>
+  ${paths.slice(0,8).join('')}
+  <g class="ly-m"><path class="a-musc" style="opacity:.6" d="M130,62 L152,60 C175,110 200,170 215,232 L188,240 C170,180 150,110 130,62 Z"/></g>
+  ${paths.slice(8,18).join('')}
+  ${paths.filter((p,i)=>i>=18&&i<30).join('')}
+  <g class="ly-v"><path class="a-art" d="M68,300 C100,250 150,205 190,205 C225,207 245,225 270,245 C320,262 400,278 460,283 C560,282 700,275 805,262"/>
+   <path class="a-art th" d="M805,262 C880,250 930,248 990,250"/><path class="a-art th" d="M805,262 C880,270 940,278 990,282"/></g>
+  ${paths.filter((p,i)=>i>=30).join('')}
+  <g class="ly-m"><path class="a-musc" style="opacity:.42" d="M458,222 L490,232 L365,440 L305,425 Z"/></g>
+  <g class="ly-b"><path class="a-bone" style="opacity:.72" d="M70,250 C150,240 230,226 300,212 C360,198 420,170 480,155 L488,172 C425,190 365,218 305,233 C230,247 150,262 72,272 Z"/></g>
+  <g class="ly-l">
+   <text class="a-lab" x="486" y="150">Klavikula</text><text class="a-lab" x="94" y="48">M. scal. ant.</text><text class="a-lab" x="214" y="42">M. scal. med.</text>
+   <text class="a-lab" x="60" y="290" style="text-anchor:start">A. subclavia</text><text class="a-lab" x="60" y="338">V. subclavia</text><text class="a-lab" x="100" y="262">1. Rippe</text>
+   <text class="a-lab" x="295" y="460">M. pect. minor</text><text class="a-lab" x="498" y="245">Coracoid</text><text class="a-lab" x="830" y="240" style="display:none"></text><text class="a-lab" x="730" y="250">Humerus</text>
+   <text class="a-lab" x="392" y="402" style="">N. intercostobr. (T2)</text><text class="a-lab" x="355" y="192">Nn. supracl.</text>
+   ${NLAB.map(([id,x,y,a])=>`<text class="n-lab ${cls(id)}" x="${x}" y="${y}" text-anchor="${a}">${NSHORT[id]||N[id].l}</text>`).join('')}
+   <text x="880" y="340" style="font-size:12px;fill:var(--muted)" text-anchor="end">kranial oben · lateral rechts</text>
+  </g>
+  ${STOPS.map((s,i)=>`<g class="stop" data-stop="${i}" tabindex="0" role="button" aria-label="Schnitt ${s.name}"><line class="ln" x1="${s.x}" y1="${s.y-46}" x2="${s.x}" y2="${s.y+40}" transform="rotate(${s.ang+90} ${s.x} ${s.y})"/><g transform="rotate(${s.ang} ${s.x} ${s.y})"><rect x="${s.x-23}" y="${s.y-7}" width="46" height="14" rx="3"/></g><circle cx="${s.x}" cy="${s.y-30}" r="10"/><text x="${s.x}" y="${s.y-30}">${i+1}</text></g>`).join('')}
+  </svg>`;
+}
+
+/* ---------- Sono-Schnitte (Schemazeichnungen) ---------- */
+const SONO={
+ isb:{d:3.5,l:'medial',r:'lateral',h:'Interskalenär, quer auf Höhe C6',it:[
+  {id:'fat',t:'fat',name:'Subkutis, Platysma',shape:'<rect class="sh" x="0" y="0" width="440" height="24"/>'},
+  {id:'scm',t:'muscle',name:'M. sternocleidomastoideus',shape:'<ellipse class="sh" cx="108" cy="50" rx="100" ry="24" transform="rotate(5 108 50)"/>',lx:70,ly:54,i:'Oberflächliche Muskelschicht, am lateralen Rand tritt der Plexus darunter hervor.'},
+  {id:'ijv',t:'vein',name:'V. jugularis interna',shape:'<ellipse class="sh" cx="72" cy="108" rx="34" ry="20"/>',lx:44,ly:112,i:'Komprimierbar, kein Pulsieren.'},
+  {id:'cca',t:'art',name:'A. carotis communis',shape:'<circle class="sh" cx="48" cy="164" r="24"/>',lx:18,ly:204,i:'Medial Marke zum Start: Von hier nach lateral gleiten.'},
+  {id:'asm',t:'muscle',name:'M. scalenus anterior',shape:'<ellipse class="sh" cx="160" cy="145" rx="42" ry="56"/>',lx:128,ly:150,i:'Medial der Skalenuslücke. Auf ihm läuft der N. phrenicus.'},
+  {id:'msm',t:'muscle',name:'M. scalenus medius',shape:'<ellipse class="sh" cx="345" cy="150" rx="84" ry="70"/>',lx:330,ly:185,i:'Lateral der Lücke. Dorsaler Nadelweg führt hindurch.'},
+  {id:'phr',t:'root',n:'phr',name:'N. phrenicus',shape:'<circle class="sh" cx="172" cy="84" r="4.5"/>',lx:128,ly:76,i:'Nur rund 2 mm von C5 auf Krikoidhöhe, weiter kaudal mehr Abstand.[2]'},
+  {id:'c5',t:'root',n:'C5',name:'C5',shape:'<circle class="sh" cx="232" cy="95" r="13"/>',lx:208,ly:72,i:'Oberste Ampel.'},
+  {id:'c6',t:'root',n:'C6',name:'C6',shape:'<ellipse class="sh" cx="229" cy="138" rx="15" ry="14"/>',lx:194,ly:140,i:'Oft zweigeteilt.'},
+  {id:'c7',t:'root',n:'C7',name:'C7',shape:'<circle class="sh" cx="224" cy="186" r="14"/>',lx:194,ly:190,i:'Unterste Ampel. Tiefer Zielpunkt, nahe A. vertebralis.'},
+  {id:'dsn',t:'root',n:'dscap',name:'N. dorsalis scapulae',shape:'<circle class="sh" cx="316" cy="90" r="4.5"/>',lx:324,ly:82,i:'Im M. scalenus medius, im Nadelweg.'},
+  {id:'ltn',t:'root',n:'lt',name:'N. thoracicus longus',shape:'<circle class="sh" cx="346" cy="128" r="4.5"/>',lx:354,ly:128,i:'Ebenfalls im M. scalenus medius.'},
+  {id:'tp',t:'bone',name:'Proc. transversus C6',shape:'<path class="sh" d="M130,255 Q155,225 185,258 Q222,278 258,238 Q290,258 330,262"/><path d="M130,258 L330,265 L330,320 L130,320 Z" fill="url(#shadow)"/>',lx:226,ly:290,i:'Zwei Höcker sind typisch für C6. C7 hat keinen vorderen Höcker.'}],
+  nd:{x1:436,y1:38,x2:248,y2:116,la:[255,116,20,28]},tip:'Spitze lateral zwischen C5 und C6: keine Injektion in die Wurzel. Das Lokalanästhetikum soll sich um C5 und C6 herum legen.'},
+ scb:{d:4,l:'medial',r:'lateral',h:'Supraklavikulär, parallel zur Klavikula, nach kaudal gekippt',it:[
+  {id:'fat',t:'fat',name:'Subkutis',shape:'<rect class="sh" x="0" y="0" width="440" height="30"/>'},
+  {id:'msm',t:'muscle',name:'M. scalenus medius',shape:'<ellipse class="sh" cx="352" cy="172" rx="80" ry="46"/>',lx:330,ly:178,i:'Lateral und tief vom Bündel.'},
+  {id:'asm',t:'muscle',name:'M. scalenus anterior',shape:'<ellipse class="sh" cx="134" cy="148" rx="22" ry="32"/>',lx:112,ly:112,i:'Trennt A. und V. subclavia.'},
+  {id:'sv',t:'vein',name:'V. subclavia',shape:'<ellipse class="sh" cx="80" cy="182" rx="32" ry="22"/>',lx:54,ly:188,i:'Medial, vor dem M. scalenus anterior.'},
+  {id:'sa',t:'art',name:'A. subclavia',shape:'<circle class="sh" cx="190" cy="172" r="30"/>',lx:160,ly:178,i:'Pulsierende Leitstruktur auf der ersten Rippe.'},
+  {id:'dsa',t:'art',name:'A. dorsalis scapulae',shape:'<circle class="sh" cx="316" cy="84" r="6"/>',lx:326,ly:82,i:'Läuft oft durch das Bündel. Vor Nadelweg mit Doppler prüfen.'},
+  {id:'gr',t:'root',n:'ts',name:'Traubenbündel (Trunci, Divisionen)',shape:'<g class="sh" style="fill:#070707"><circle cx="248" cy="92" r="11"/><circle cx="272" cy="86" r="10"/><circle cx="295" cy="104" r="11"/><circle cx="256" cy="115" r="11"/><circle cx="279" cy="122" r="11"/><circle cx="234" cy="130" r="10"/><circle cx="258" cy="142" r="11"/><circle cx="287" cy="146" r="9"/></g>',lx:238,ly:72,i:'Mehrere runde, echoarme Bündel lateral-oberflächlich der Arterie.'},
+  {id:'it',t:'root',n:'ti',name:'Tr. inferior (Ecktasche)',shape:'<circle class="sh" cx="236" cy="196" r="11"/>',lx:256,ly:210,i:'Zwischen Arterie, Rippe und Bündel. Hier wird der Ulnaris-Anteil erreicht.'},
+  {id:'rib',t:'bone',name:'1. Rippe',shape:'<path class="sh" d="M152,232 Q215,216 285,232"/><path d="M152,234 Q215,218 285,234 L285,320 L152,320 Z" fill="url(#shadow)"/>',lx:192,ly:262,i:'Heller Bogen mit Schallschatten. Die Nadel soll Richtung Rippe zeigen.'},
+  {id:'pl1',t:'pleura',name:'Pleura (medial)',shape:'<path class="sh" d="M12,250 L148,246"/>',lx:50,ly:268,i:'Gleitend, unter ihr Kometenschweif-Artefakte. Kein Kontakt.'},
+  {id:'pl2',t:'pleura',name:'Pleura (lateral)',shape:'<path class="sh" d="M290,246 L428,250"/>',lx:320,ly:268,i:'Tief der Ebene, seitlich der Rippe. Hier droht der Pneumothorax.'}],
+  nd:{x1:436,y1:44,x2:246,y2:186,la:[244,178,28,22]},tip:'Ziel Ecktasche: Zwischen Arterie und Rippe kann Lokalanästhetikum das Bündel von unten anheben. Zweite Portion oberflächlich.'},
+ infra:{d:5.5,l:'kranial',r:'kaudal',h:'Infraklavikulär, parasagittal medial des Proc. coracoideus',it:[
+  {id:'fat',t:'fat',name:'Subkutis',shape:'<rect class="sh" x="0" y="0" width="440" height="20"/>'},
+  {id:'pma',t:'muscle',name:'M. pectoralis major',shape:'<rect class="sh" x="0" y="22" width="440" height="72"/>',lx:300,ly:62,i:'Erste Muskelschicht.'},
+  {id:'pmi',t:'muscle',name:'M. pectoralis minor',shape:'<rect class="sh" x="0" y="98" width="440" height="56" rx="10"/>',lx:320,ly:132,i:'Zweite Schicht. Direkt darunter liegt das Bündel.'},
+  {id:'cv',t:'vein',name:'V. cephalica',shape:'<ellipse class="sh" cx="352" cy="24" rx="11" ry="6"/>',lx:368,ly:18,i:'Oberflächlich, Nadelweg kaudal von ihr vermeiden.'},
+  {id:'aa',t:'art',name:'A. axillaris',shape:'<circle class="sh" cx="200" cy="205" r="25"/>',lx:178,ly:210,i:'Zentrale Referenz. Faszikel im Uhrzeigersinn um sie herum.'},
+  {id:'vv',t:'vein',name:'V. axillaris',shape:'<ellipse class="sh" cx="296" cy="222" rx="34" ry="24"/>',lx:276,ly:228,i:'Kaudal der Arterie, gut komprimierbar.'},
+  {id:'lc',t:'hc',n:'lat',name:'Fasc. lateralis',shape:'<ellipse class="sh" cx="158" cy="176" rx="15" ry="12"/>',lx:112,ly:172,i:'Kranial der Arterie, etwa 9–10 Uhr. Liegt nahe am Nadelweg.'},
+  {id:'pc',t:'hc',n:'post',name:'Fasc. posterior',shape:'<ellipse class="sh" cx="212" cy="262" rx="15" ry="11"/>',lx:162,ly:286,i:'Dorsal der Arterie, 6–7 Uhr. Hier beginnt die U-Spreizung.'},
+  {id:'mc',t:'hc',n:'medc',name:'Fasc. medialis',shape:'<ellipse class="sh" cx="258" cy="252" rx="13" ry="10"/>',lx:256,ly:276,i:'Zwischen Arterie und Vene, 4–5 Uhr, oft schlecht sichtbar.'},
+  {id:'pl',t:'pleura',name:'Pleura',shape:'<path class="sh" d="M12,308 L428,304"/>',lx:340,ly:298,i:'Tief und oft medial. Ein steiler Weg kaudal der Arterie gefährdet sie.'}],
+  nd:{x1:14,y1:40,x2:183,y2:246,la:[200,248,48,20]},tip:'Spitze hinter die Arterie auf 6 Uhr. Das Volumen soll U-förmig von Fasc. lateralis über posterior nach medialis laufen und die Arterie von der Hinterwand anheben.'},
+ ax:{d:3,l:'lateral',r:'medial',h:'Axillär, quer, Arm abduziert',it:[
+  {id:'fat',t:'fat',name:'Subkutis',shape:'<rect class="sh" x="0" y="0" width="440" height="24"/>'},
+  {id:'bic',t:'muscle',name:'M. biceps brachii',shape:'<ellipse class="sh" cx="72" cy="66" rx="72" ry="34"/>',lx:38,ly:60,i:'Lateral oberflächlich.'},
+  {id:'cb',t:'muscle',name:'M. coracobrachialis',shape:'<ellipse class="sh" cx="82" cy="138" rx="64" ry="32"/>',lx:44,ly:144,i:'Der N. musculocutaneus verläuft oft direkt in oder neben ihm.'},
+  {id:'tri',t:'muscle',name:'M. triceps',shape:'<ellipse class="sh" cx="345" cy="222" rx="96" ry="50"/>',lx:330,ly:230,i:'Tief und medial.'},
+  {id:'aa',t:'art',name:'A. axillaris',shape:'<circle class="sh" cx="226" cy="100" r="18"/>',lx:208,ly:104,i:'Referenz: Nerven im Uhrzeigersinn.'},
+  {id:'v1',t:'vein',name:'V. axillaris',shape:'<ellipse class="sh" cx="302" cy="100" rx="18" ry="11"/>',lx:324,ly:96,i:'Verschwindet bei Druck. Sonde entlasten, bevor injiziert wird.'},
+  {id:'v2',t:'vein',name:'V. brachialis',shape:'<ellipse class="sh" cx="262" cy="130" rx="13" ry="9"/>',lx:286,ly:136,i:'Häufige Fehlpunktion: Immer in Spitzennähe sehen und aspirieren.'},
+  {id:'mn',t:'hc',n:'mn',name:'N. medianus',shape:'<circle class="sh" cx="188" cy="76" r="12"/>',lx:158,ly:52,i:'10–11 Uhr, honigwabenartig, oberflächlich.'},
+  {id:'un',t:'hc',n:'un',name:'N. ulnaris',shape:'<circle class="sh" cx="262" cy="72" r="11"/>',lx:256,ly:50,i:'1–2 Uhr, oberflächlich-medial, zwischen Arterie und Vene.'},
+  {id:'rn',t:'hc',n:'rad',name:'N. radialis',shape:'<circle class="sh" cx="236" cy="150" r="12"/>',lx:178,ly:156,i:'5–6 Uhr, hinter der Arterie auf der Conjoint Tendon.'},
+  {id:'mcn',t:'hc',n:'mcn',name:'N. musculocutaneus',shape:'<ellipse class="sh" cx="140" cy="104" rx="11" ry="7"/>',lx:66,ly:108,i:'Außerhalb der Scheide zwischen Biceps und Coracobrachialis. Immer separat.'},
+  {id:'ct',t:'ten',name:'Conjoint Tendon',shape:'<path class="sh" d="M178,174 Q240,184 300,168"/>',lx:194,ly:198,i:'Sehne aus M. latissimus dorsi und teres major. Helle Leitstruktur unter dem Bündel, der N. radialis liegt auf ihr.'},
+  {id:'hu',t:'bone',name:'Humerus',shape:'<path class="sh" d="M20,232 Q78,204 138,232"/><path d="M20,234 Q78,206 138,234 L138,320 L20,320 Z" fill="url(#shadow)"/>',lx:50,ly:262,i:'Lateral mit Schallschatten.'}],
+  nd:{x1:8,y1:128,x2:222,y2:146,la:[232,152,24,16]},tip:'Reihenfolge: tief zuerst. Radialis, dann Medianus und Ulnaris von oberflächlich, zuletzt N. musculocutaneus. Sonst schiebt das Lokalanästhetikum die tiefen Ziele aus dem Bild.'},
+ fa:{d:3,l:'radial',r:'ulnar',h:'Mittlerer Unterarm, quer auf der Beugeseite',it:[
+  {id:'fat',t:'fat',name:'Subkutis',shape:'<rect class="sh" x="0" y="0" width="440" height="20"/>'},
+  {id:'br',t:'muscle',name:'M. brachioradialis',shape:'<ellipse class="sh" cx="56" cy="60" rx="58" ry="32"/>',lx:22,ly:64,i:'Lateral, darunter liegt der R. superficialis.'},
+  {id:'fds',t:'muscle',name:'M. flexor digitorum superficialis',shape:'<ellipse class="sh" cx="220" cy="66" rx="104" ry="34"/>',lx:150,ly:60,i:'Oberflächliche Beuger.'},
+  {id:'fdp',t:'muscle',name:'M. flexor digitorum profundus',shape:'<ellipse class="sh" cx="238" cy="182" rx="118" ry="42"/>',lx:164,ly:188,i:'Tiefe Beuger.'},
+  {id:'fcu',t:'muscle',name:'M. flexor carpi ulnaris',shape:'<ellipse class="sh" cx="388" cy="78" rx="50" ry="30"/>',lx:356,ly:74,i:'Ulnar. Der Nerv liegt unter ihm.'},
+  {id:'ra',t:'art',name:'A. radialis',shape:'<circle class="sh" cx="104" cy="112" r="8"/>',lx:114,ly:118,i:'Führt zum Radialis superficialis.'},
+  {id:'rs',t:'hc',n:'rsup',name:'R. superficialis n. radialis',shape:'<circle class="sh" cx="78" cy="112" r="7"/>',lx:8,ly:132,i:'Direkt lateral der A. radialis, rein sensibel.'},
+  {id:'mn',t:'hc',n:'mn',name:'N. medianus',shape:'<ellipse class="sh" cx="222" cy="125" rx="17" ry="10"/>',lx:194,ly:150,i:'Zwischen FDS und FDP. Beim Sondengleiten bleibt er als einzige Struktur in der Tiefe, während die Muskelbäuche wandern.'},
+  {id:'ua',t:'art',name:'A. ulnaris',shape:'<circle class="sh" cx="344" cy="118" r="8"/>',lx:300,ly:112,i:'Nach proximal verläuft die Arterie vom Nerv weg. Gut für die Identifizierung.'},
+  {id:'un',t:'hc',n:'un',name:'N. ulnaris',shape:'<ellipse class="sh" cx="370" cy="120" rx="11" ry="8"/>',lx:384,ly:128,i:'Direkt medial der A. ulnaris.'},
+  {id:'ra2',t:'bone',name:'Radius',shape:'<path class="sh" d="M50,252 Q92,230 132,252"/><path d="M50,254 Q92,232 132,254 L132,320 L50,320 Z" fill="url(#shadow)"/>',lx:76,ly:276,i:'Lateraler Knochen.'},
+  {id:'ul',t:'bone',name:'Ulna',shape:'<path class="sh" d="M320,252 Q362,232 404,252"/><path d="M320,254 Q362,234 404,254 L404,320 L320,320 Z" fill="url(#shadow)"/>',lx:346,ly:276,i:'Medialer Knochen.'}],
+  nd:{x1:432,y1:60,x2:244,y2:122,la:[225,126,24,16]},tip:'Am mittleren Unterarm genügen je 3–5 mL. Der Block deckt keine Oberarm-Blutsperre ab, er eignet sich vor allem für distale OPs und als Rescue.'}
+};
+function sonoSVG(key,opts={}){
+  const S=SONO[key],W=440,H=320;const pxPerCm=H/S.d;
+  let ticks='';for(let c=1;c<=Math.floor(S.d);c++){const y=c*pxPerCm;ticks+=`<line x1="${W+2}" y1="${y}" x2="${W+9}" y2="${y}" stroke="#EDEBE3"/><text class="dep" x="${W+12}" y="${y+3.5}">${c} cm</text>`}
+  const n=S.nd,len=Math.hypot(n.x2-n.x1,n.y2-n.y1);
+  const defs=`<defs><pattern id="mus" width="44" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-6)"><rect width="44" height="9" fill="#383734"/><path d="M0,4 C11,1 22,7 44,4" stroke="#6A6964" stroke-width=".9" fill="none"/></pattern>
+  <pattern id="hc" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#CFCDC4"/><circle cx="3.5" cy="3.5" r="2" fill="#101010"/></pattern>
+  <linearGradient id="shadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".97"/><stop offset="1" stop-color="#000" stop-opacity=".97"/></linearGradient>
+  <filter id="speck" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.6 0 0 0 -.62"/></filter></defs>`;
+  const items=S.it.map(u=>`<g class="u ${u.t}" data-u="${u.id}" tabindex="0" role="button" aria-label="${opts.blind?'Struktur':u.name}">${u.shape}</g>`).join('');
+  const labels=opts.labels===false?'':S.it.filter(u=>u.lx!=null).map(u=>`<text class="u-lab" x="${u.lx}" y="${u.ly}">${u.name}</text>`).join('');
+  const needle=opts.needle?`<g class="needle"><ellipse class="la" cx="${n.la[0]}" cy="${n.la[1]}" rx="${n.la[2]}" ry="${n.la[3]}"/><line class="nd-move" style="--len:${len}" stroke-dasharray="${len}" x1="${n.x1}" y1="${n.y1}" x2="${n.x2}" y2="${n.y2}"/></g>`:'';
+  return `<svg viewBox="-4 -16 ${W+52} ${H+22}" role="img" aria-label="Schematische Sono-Ansicht: ${S.h}" class="${opts.needle?'show-needle':''}">${defs}
+   <text class="ori" x="2" y="-5">${S.l.toUpperCase()}</text><text class="ori" x="${W-2}" y="-5" text-anchor="end">${S.r.toUpperCase()}</text>
+   <clipPath id="clip-${key}"><rect width="${W}" height="${H}"/></clipPath>
+   <g clip-path="url(#clip-${key})"><rect width="${W}" height="${H}" fill="#22211F"/>${items}<rect width="${W}" height="${H}" filter="url(#speck)" opacity=".2" style="pointer-events:none"/></g>
+   ${ticks}${needle}${labels}</svg>`;
+}
+function viewAnat(){
+  const st=STOPS[state.stop];const B=BLOCKS[st.id==='ax'?'ax':st.id];
+  $('#view').innerHTML=`<div class="an-grid">
+   <div class="stack">
+    <div>
+     <div class="stops-names">${STOPS.map((s,i)=>`<button data-stop="${i}" aria-pressed="${i===state.stop}">${i+1} · ${s.name}</button>`).join('')}</div>
+     <div class="stepper"><button id="prev" aria-label="Weiter nach zervikal">‹</button><input id="stopR" type="range" min="0" max="4" step="1" value="${state.stop}" aria-label="Schallkopfposition von zervikal nach distal"><button id="next" aria-label="Weiter nach distal">›</button></div>
+     <div class="bar"><label class="tg"><input type="checkbox" id="lyM" ${state.layers.m?'checked':''}> Muskeln</label><label class="tg"><input type="checkbox" id="lyB" ${state.layers.b?'checked':''}> Knochen</label><label class="tg"><input type="checkbox" id="lyV" ${state.layers.v?'checked':''}> Gefäße</label><label class="tg"><input type="checkbox" id="lyL" ${state.layers.l?'checked':''}> Beschriftung</label><label class="tg"><input type="checkbox" id="lyC" ${state.cov?'checked':''}> Abdeckung dieses Blocks</label></div>
+     <div class="fig anat" id="an">${anatSVG()}</div>
+     <p class="note" style="margin-top:6px">Linke Körperseite von ventral, Arm 90° abduziert. Gestrichelte Nerven liegen hinter Arterie oder Knochen. Nerv anklicken zeigt seinen Verlauf.</p>
+    </div>
+    <div class="card" id="anPanel"></div>
+   </div>
+   <div class="stack">
+    <div class="sono"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;margin-bottom:6px"><strong style="font:600 14px var(--f-b)">${SONO[st.id].h}</strong>
+     <span style="display:flex;gap:10px;font-size:13px"><label class="tg"><input type="checkbox" id="sLab" ${state.labels?'checked':''}> Beschriftung</label><label class="tg"><input type="checkbox" id="sNd" ${state.needle?'checked':''}> Nadel &amp; LA</label></span></div>
+     <div id="sn">${sonoSVG(st.id,{needle:state.needle})}</div>
+     <p style="margin:6px 2px 0;font-size:12.5px;color:var(--us-text);opacity:.8">Schemazeichnung, kein echtes Bild. Struktur anklicken für Erklärung.</p></div>
+    <div class="card" id="uPanel"></div>
+   </div></div>`;
+  const an=$('#an');
+  const apply=()=>{an.classList.toggle('hide-muscle',!state.layers.m);an.classList.toggle('hide-bone',!state.layers.b);an.classList.toggle('hide-vess',!state.layers.v);an.classList.toggle('hide-lab',!state.layers.l);
+    applyCov(an,state.cov?(st.id):null);applyLit(an,state.sel);$$('.stop',an).forEach(g=>g.classList.toggle('on',+g.dataset.stop===state.stop));
+    $('#sn').classList.toggle('nolab',!state.labels);$('#anPanel').innerHTML=state.sel?nerveHTML(state.sel):'';};
+  [['lyM','m'],['lyB','b'],['lyV','v'],['lyL','l']].forEach(([i,k])=>$('#'+i).onchange=e=>{state.layers[k]=e.target.checked;apply()});
+  $('#lyC').onchange=e=>{state.cov=e.target.checked;state.block=state.cov?st.id:state.block;apply()};
+  $('#sLab').onchange=e=>{state.labels=e.target.checked;apply()};
+  $('#sNd').onchange=e=>{state.needle=e.target.checked;viewAnat()};
+  $('#prev').onclick=()=>setStop(state.stop-1);$('#next').onclick=()=>setStop(state.stop+1);
+  $('#stopR').oninput=e=>setStop(+e.target.value);
+  renderU();apply();
+  $('#sn').addEventListener('click',e=>{const g=e.target.closest('[data-u]');if(!g)return;state.pick=g.dataset.u;renderU()});
+}
+function setStop(i){if(i<0||i>4)return;state.stop=i;state.pick=null;state.sel=STOPS[i].target;viewAnat()}
+function renderU(){
+  const st=STOPS[state.stop];const S=SONO[st.id];const B=BLOCKS[st.id];const box=$('#uPanel');if(!box)return;
+  $$('.u',$('#sn')).forEach(g=>g.classList.toggle('pk',g.dataset.u===state.pick));
+  let h='';
+  if(state.pick){const u=S.it.find(x=>x.id===state.pick);h+=`<h2>${u.name}</h2><p>${fmt(u.i||'Oberflächliche Schicht.')}</p>`;if(u.n)h+=`<p><button class="btn ghost" data-nerve="${u.n}">Im Schema zeigen</button></p>`;}
+  else h+=`<h2>${B.n}</h2>`;
+  h+=`<h3>Sonde und Lagerung</h3><p>${B.pos}</p><h3>Bild aufbauen</h3><ul>${B.find.map(x=>`<li>${x}</li>`).join('')}</ul><h3>Nadel</h3><p>${B.nd} <span class="tag">${B.vol}</span></p><div class="tip">${S.tip}</div><h3>Risiken</h3><ul>${B.risk.map(x=>`<li>${fmt(x)}</li>`).join('')}</ul>`;
+  box.innerHTML=h;
+}
+
+/* ---------- Sensibilitätskarte ---------- */
+const REG={
+ v:[['scl','70,12 190,12 190,40 70,40'],['ulbc','70,40 130,40 130,120 72,120'],['rad','72,120 130,120 130,240 86,240'],['icb','130,40 190,40 186,120 130,120'],['mbc','130,120 186,120 175,240 130,240'],
+    ['lacn','86,240 130,240 130,420 100,420'],['mabc','130,240 175,240 162,420 130,420'],['rsup','100,420 112,420 108,455 92,450'],['mn','112,420 134,420 137,492 98,492 92,450 108,455'],['un','134,420 162,420 164,492 137,492'],
+    ['mn','92,445 98,478 72,520 58,510'],['mn','98,492 112,492 112,548 98,548'],['mn','114,492 128,492 128,554 114,554'],['mn','130,492 137,492 137,550 130,550'],['un','137,492 144,492 144,550 137,550'],['un','147,492 162,492 162,538 147,538']],
+ d:[['scl','70,12 190,12 190,40 70,40'],['ulbc','70,40 125,40 125,130 72,130'],['rad','72,130 125,130 125,40 165,40 170,240 86,240'],['icb','165,40 190,40 187,110 167,110'],['mbc','167,110 187,110 175,240 170,240'],
+    ['pacn','105,240 150,240 145,420 112,420'],['lacn','86,240 105,240 112,420 100,420'],['mabc','150,240 175,240 162,420 145,420'],['rsup','100,420 134,420 137,492 98,492 92,450'],['rdu','134,420 162,420 164,492 137,492'],
+    ['rsup','92,445 98,478 72,520 58,510'],['rsup','98,492 112,492 112,520 98,520'],['mn','98,520 112,520 112,548 98,548'],['rsup','114,492 128,492 128,520 114,520'],['mn','114,520 128,520 128,554 114,554'],['rsup','130,492 137,492 137,518 130,518'],['mn','130,518 137,518 137,550 130,550'],['rdu','137,492 144,492 144,550 137,550'],['rdu','147,492 162,492 162,538 147,538']]
+};
+function mapSVG(block){
+  const cov=BLOCKS[block].cov;const reg=(k,pts)=>`<polygon class="r ${cov[k]==='S'?'N':(cov[k]||'N')} ${state.mapPick===k?'pk':''}" data-r="${k}" points="${pts}" tabindex="0" aria-label="${N[k].full||N[k].l}"/>`;
+  return `<svg viewBox="30 0 500 572" role="img" aria-label="Sensible Abdeckung des Arms für ${BLOCKS[block].n}">
+  <defs><pattern id="ph" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="var(--surf2)"/><rect width="3.5" height="7" fill="var(--blue)"/></pattern></defs>
+  <g>${REG.v.map(([k,p])=>reg(k,p)).join('')}</g>
+  <g transform="translate(528,0) scale(-1,1)">${REG.d.map(([k,p])=>reg(k,p)).join('')}</g>
+  <text x="130" y="570" text-anchor="middle" style="font-size:13px;font-weight:600">Ventral (rechter Arm)</text><text x="398" y="570" text-anchor="middle" style="font-size:13px;font-weight:600">Dorsal</text></svg>`;
+}
+const OPS={
+ sch:{n:'Schulter-Arthroskopie',a:'ISB oder Superior Trunk als Basis. Bei schlechter Lunge SSN + N. axillaris mit Allgemeinanästhesie.',add:'Für die Hautportale ggf. oberflächlicher Zervikalblock (Nn. supraclaviculares).',b:'isb'},
+ hum:{n:'Proximaler Humerus',a:'ISB oder Superior Trunk.',add:'Bei medialem Zugang T2-Anteile mitdenken (N. intercostobrachialis).',b:'isb'},
+ cla:{n:'Klavikula lateral',a:'ISB plus oberflächlicher Zervikalblock.',add:'Die Haut versorgen die Nn. supraclaviculares aus C3/C4, nicht der Plexus brachialis.',b:'isb'},
+ ell:{n:'Ellenbogen',a:'Supraklavikulär oder infraklavikulär. Axillär möglich, wenn alle vier Nerven einzeln getroffen werden.',add:'Blutsperre: N. intercostobrachialis subkutan.',b:'scb'},
+ ua:{n:'Unterarm, Handgelenk',a:'Supraklavikulär, infraklavikulär oder axillär.',add:'Bei Blutsperre > 30 min: subkutaner Halbring an der Achselfalte.',b:'infra'},
+ han:{n:'Hand, Karpaltunnel',a:'Axillär, bei kurzen Eingriffen gezielt Unterarm-Blöcke.',add:'Bei Unterarm-Blöcken R. dorsalis n. ulnaris und R. superficialis nicht vergessen.',b:'ax'},
+ sha:{n:'AV-Shunt',a:'Axillär oder supraklavikulär. Sympathikolyse erweitert die Vene und verbessert die Fistel-Reifung.',add:'N. cut. antebrachii med. mitdenken, sonst Schmerzen am medialen Unterarm.',b:'ax'}
+};
+function viewBlocks(){
+  if(!state.block)state.block='isb';const B=BLOCKS[state.block];const COLS=[['ssn','SSN'],['ax','Ax'],['mcn','MCN'],['mn','Med'],['rad','Rad'],['un','Uln'],['mabc','MABC'],['icb','T2']];
+  $('#view').innerHTML=`${blockChips(false)}
+  <div class="two">
+   <div class="stack">
+    <div class="card">
+     <h2>${B.n}</h2><span class="tag">${B.lv}</span>
+     <h3>Geeignet für</h3><p>${B.for}</p>
+     <h3>Lagerung und Sonde</h3><p>${B.pos}</p>
+     <h3>Bild aufbauen</h3><ul>${B.find.map(x=>`<li>${x}</li>`).join('')}</ul>
+     <h3>Nadel und Volumen</h3><p>${B.nd} <span class="tag">${B.vol}</span></p>
+     <h3>Was fehlt</h3><ul>${B.gaps.map(x=>`<li>${x}</li>`).join('')}</ul>
+     <div class="warn"><strong>Risiken</strong><ul style="margin:4px 0 0">${B.risk.map(x=>`<li>${fmt(x)}</li>`).join('')}</ul></div>
+     <div class="tip">${B.tip}</div>
+     <p style="display:flex;gap:8px;flex-wrap:wrap">${B.stop!=null?`<button class="btn" data-sono="${B.stop}">Sono-Schnitt öffnen</button>`:''}<button class="btn ghost" data-goto="schema">Im Schema zeigen</button></p>
+    </div>
+    <div class="card"><h3>Vergleich: Wer erreicht was?</h3>
+     <div class="scroll"><table><thead><tr><th>Block</th>${COLS.map(c=>`<th>${c[1]}</th>`).join('')}<th class="l">Phrenikus</th><th class="l">Pneu</th></tr></thead>
+     <tbody>${BKEYS.map(b=>`<tr class="clk ${b===state.block?'act':''}" data-block="${b}"><td>${BLOCKS[b].s}</td>${COLS.map(c=>{const st=BLOCKS[b].cov[c[0]]||'N';return `<td><span class="st ${st}" title="${{F:'zuverlässig',P:'variabel',N:'nein'}[st]}" aria-label="${{F:'zuverlässig',P:'variabel',N:'nein'}[st]}"></span></td>`}).join('')}<td class="l">${fmt(BLOCKS[b].phr)}</td><td class="l">${BLOCKS[b].pneu}</td></tr>`).join('')}</tbody></table></div>
+     <p class="note" style="margin-top:6px">Voll = zuverlässig, halb = variabel, leer = nicht erreicht. T2 = N. intercostobrachialis.</p></div>
+   </div>
+   <div class="stack">
+    <div class="fig" style="padding:12px"><h3 style="margin-bottom:6px">Sensible Abdeckung: ${B.n}</h3>${mapSVG(state.block)}
+     <div class="legend"><span><span class="st F"></span> zuverlässig</span><span><span class="st P"></span> variabel</span><span><span class="st N"></span> nicht erreicht</span></div>
+     <p class="note" id="mapCap" style="margin:6px 0 0">Feld anklicken zeigt den zuständigen Nerv.</p></div>
+    <div class="card"><h3>Welche OP, welcher Block?</h3><div class="bar" style="margin-bottom:4px">${Object.keys(OPS).map(k=>`<button class="chip" data-op="${k}" aria-pressed="${state.finder===k}">${OPS[k].n}</button>`).join('')}</div>
+     <div class="fd-ans"><strong>${OPS[state.finder].a}</strong><br>${OPS[state.finder].add}</div></div>
+    <div class="card"><h3>Blockprüfung: Push, Pull, Pinch, Pinch</h3><div class="scroll"><table><thead><tr><th>Test</th><th class="l">Nerv</th><th class="l">Bewegung</th><th class="l">Haut</th></tr></thead><tbody>
+     <tr><td>Push</td><td class="l">N. radialis</td><td class="l">Ellenbogen strecken</td><td class="l">Dorsale erste Interdigitalfalte</td></tr>
+     <tr><td>Pull</td><td class="l">N. musculocutaneus</td><td class="l">Ellenbogen beugen</td><td class="l">Radialer Unterarm</td></tr>
+     <tr><td>Pinch</td><td class="l">N. medianus</td><td class="l">Daumen an Zeigefinger</td><td class="l">Zeigefingerkuppe palmar</td></tr>
+     <tr><td>Pinch</td><td class="l">N. ulnaris</td><td class="l">Finger spreizen</td><td class="l">Kleinfingerkuppe</td></tr>
+     <tr><td>Abduktion</td><td class="l">N. axillaris</td><td class="l">Arm abspreizen</td><td class="l">Regimentsabzeichen</td></tr></tbody></table></div></div>
+    <div class="warn"><strong>LAST<sup>[5]</sup>:</strong> Injektion stoppen, Hilfe rufen, Atemweg sichern, Krampfanfall mit Benzodiazepin behandeln. Lipidemulsion 20 %: unter 70 kg 1,5 mL/kg Bolus, über 70 kg 100 mL Bolus, anschließend Infusion nach Klinik-Checkliste. Lipid früh geben, Adrenalin nur niedrig dosiert. Vor jedem Block: Monitoring, Zugang, Lipid griffbereit.</div>
+   </div>
+  </div>`;
+}
+
+/* ---------- Quiz ---------- */
+const MC=[
+ {q:'Nach ISB (15 mL) für eine Schulter-OP sind Schulter und Daumen taub, der Kleinfinger fühlt und bewegt sich normal. Überrascht dich das?',o:['Nein. C8/T1 und damit N. ulnaris bleiben beim ISB meist ausgespart.','Ja, das spricht für eine Fehlinjektion in den N. phrenicus.','Ja, der N. ulnaris wird beim ISB immer blockiert.','Nein, weil der N. ulnaris aus C5–C6 stammt.'],a:0,w:'Der ISB trifft C5–C6, teils C7. Der N. ulnaris (C8/T1) bleibt typischerweise frei.',n:'un'},
+ {q:'Warum entsteht beim ISB eine Hemidiaphragmaparese?',o:['Der N. phrenicus liegt auf Krikoidhöhe nur etwa 2 mm von C5 entfernt.','Das Lokalanästhetikum breitet sich bis zum Zwerchfell aus.','Der N. thoracicus longus versorgt das Zwerchfell.','Weil der Tr. inferior miterfasst wird.'],a:0,w:'Kessler 2008: unter 2 mm auf Krikoidhöhe, pro cm nach kaudal rund 3 mm mehr Abstand.',n:'phr'},
+ {q:'Wo liegt der N. musculocutaneus beim axillären Block typischerweise?',o:['Außerhalb der Scheide, zwischen Biceps und Coracobrachialis','Auf 6 Uhr hinter der Arterie','Auf 1–2 Uhr neben der Vene','Unter der Conjoint Tendon'],a:0,w:'Er hat das Bündel schon verlassen. Separat blocken, sonst fehlt der radiale Unterarm und die Beugung.',n:'mcn'},
+ {q:'Handgelenk-OP unter axillärem Block mit Oberarmblutsperre. Patient:in hat nach 40 min Schmerzen am proximalen medialen Oberarm. Welcher Nerv ist schuld?',o:['N. intercostobrachialis (T2)','N. axillaris','N. musculocutaneus','N. radialis'],a:0,w:'Kein Plexusblock erreicht T2. Abhilfe: subkutaner Halbring an der Achselfalte. Der N. cutaneus brachii medialis kann mitbeteiligt sein.',n:'icb'},
+ {q:'Warum reicht der axilläre Block nicht für eine Schulter-OP?',o:['N. axillaris und N. suprascapularis sind proximal schon abgegangen.','Der N. medianus wird nicht erreicht.','Der N. phrenicus wird mitgeblockt.','Die Pleura liegt im Weg.'],a:0,w:'Beide Schulternerven verlassen den Plexus vor der Achsel.',n:'ssn'},
+ {q:'Ein Radialis-Ausfall wäre besonders typisch bei welcher Art Fehler beim axillären Block?',o:['Keine tiefe Injektion auf 5–6 Uhr hinter der Arterie','Fehlende Injektion zwischen Biceps und Coracobrachialis','Fehlende Injektion auf 1–2 Uhr','Zu hoch gestochen, oberhalb der Klavikula'],a:0,w:'Der N. radialis liegt tief auf der Conjoint Tendon. Tiefe Injektion zuerst.',n:'rad'},
+ {q:'Beim SCB fehlt nach 30 min die Kleinfingeranästhesie. Wahrscheinlichste Erklärung?',o:['Die Ecktasche wurde nicht gefüllt, der Tr. inferior blieb außen vor.','Der N. suprascapularis wurde verletzt.','Der N. axillaris ist zu früh abgegangen.','Zu viel Lokalanästhetikum in den M. scalenus anterior.'],a:0,w:'Der Tr. inferior liegt zwischen Arterie, Rippe und dem restlichen Bündel. Darum Ecktasche als erste Portion.',n:'ti'},
+ {q:'Was ist die beste Option für eine Hand-OP bei Patient:in mit schwerer COPD und gerinnungshemmender Therapie?',o:['Axillärer Block','Interskalenärer Block','Supraklavikulärer Block','Superior-Trunk-Block'],a:0,w:'Keine Phrenikusparese, kein Pneumothorax, gut komprimierbar.',n:'mn'},
+ {q:'Welches Zeichen spricht sonographisch für die Höhe C6?',o:['Querfortsatz mit zwei Höckern (Tuberculum ant. und post.)','Querfortsatz nur mit hinterem Höcker','A. vertebralis frei vor dem Querfortsatz','Fehlender Querfortsatz'],a:0,w:'C6 hat einen prominenten vorderen Höcker. C7 hat keinen vorderen Höcker, und die A. vertebralis ist dort sichtbar.',n:'C6'},
+ {q:'Wozu dient beim dorsalen ISB das Scannen des M. scalenus medius vor dem Vorschub?',o:['N. dorsalis scapulae und N. thoracicus longus umgehen','N. phrenicus aufsuchen','A. carotis punktieren vermeiden','C8 darstellen'],a:0,w:'Beide Nerven laufen durch den Muskel im Nadelweg. Verletzung: Scapula alata (N. thoracicus longus) oder Rhomboideus-Schwäche.',n:'dscap'},
+ {q:'Nerv mit Segmentbezug C5/C6, der von posterior im Quadrilateral Space blockierbar ist?',o:['N. axillaris','N. suprascapularis','N. musculocutaneus','N. thoracodorsalis'],a:0,w:'Der N. axillaris läuft um das Collum chirurgicum neben der A. circumflexa humeri posterior.',n:'ax'},
+ {q:'Woran erkennst du im Unterarm-Schnitt den N. medianus?',o:['Honigwabe zwischen FDS und FDP, die beim Sondengleiten am Ort bleibt, während Muskelbäuche sich verschieben','Echoarmer Punkt mit Pulsation','Heller Bogen mit Schallschatten','Direkt neben der A. radialis'],a:0,w:'Sehnen werden beim Gleiten nach distal echoreicher und laufen auseinander, der Nerv bleibt.',n:'mn'},
+ {q:'Warum erleichtern Abduktion und Außenrotation des Arms den infraklavikulären Block?',o:['Sie heben die Klavikula an und ziehen den Plexus nach oben, die Nadelstrecke wird kürzer.','Sie schützen den N. phrenicus vor dem Lokalanästhetikum.','Sie verschieben die V. axillaris lateral der Arterie.','Sie entspannen den M. scalenus anterior.'],a:0,w:'Das Manöver bringt den Plexus näher an die Haut. Nadelweg und Bild werden besser.',n:'post'},
+ {q:'Welche Fasern führt der N. medianus nicht direkt?',o:['Fasern aus dem Fasc. posterior','Fasern aus dem Fasc. lateralis','Fasern aus dem Fasc. medialis','Fasern aus C8'],a:0,w:'Die Medianusgabel: Fasc. lateralis (C5–C7) und Fasc. medialis (C8/T1). Hintere Divisionen sind Extensoren.',n:'mn'},
+ {q:'Warum sind die Wurzeln beim ISB empfindlicher gegenüber Injektion als Nerven am Unterarm?',o:['Wenig Bindegewebe, hoher Anteil neuraler Strukturen','Zu viele Arterien im Epineurium','Die Wurzeln führen nur sensible Fasern','Sie liegen stets tief zur Pleura'],a:0,w:'Wurzeln sind fast monofaszikulär. Niedriges Volumen, Injektion außerhalb, Spitze sichtbar halten.',n:'C5'},
+ {q:'Was bedeutet für den N. ulnaris die Lage „1–2 Uhr“ beim axillären Block?',o:['Oberflächlich-medial der Arterie, zwischen Arterie und Vene','Tief hinter der Arterie','Lateral im Coracobrachialis','Auf dem Humerus'],a:0,w:'Häufige Fehlerquelle ist die Vene daneben. Druck lösen, um die Venen sichtbar zu machen.',n:'un'}
+];
+const SCHEMA_ASK=[['ts','Truncus superior'],['ti','Truncus inferior'],['tm','Truncus medius'],['lat','Fasciculus lateralis'],['post','Fasciculus posterior'],['medc','Fasciculus medialis'],['ssn','Der Nerv, der beim SCB verloren gehen kann, aber beim ISB zuverlässig blockt und die hintere Schulterkapsel versorgt'],['ax','N. axillaris'],['rad','N. radialis'],['mn','N. medianus'],['un','N. ulnaris'],['mcn','N. musculocutaneus'],['phr','Der Nerv, der beim ISB die Atmung einschränkt'],['lt','Der Nerv, dessen Ausfall eine Scapula alata macht'],['dscap','Der Nerv für die Mm. rhomboidei'],['icb','Der Hautnerv für den Blutsperrenschmerz, kein Plexusast'],['mabc','N. cutaneus antebrachii medialis'],['pin','N. interosseus posterior'],['ain','N. interosseus anterior'],['sp','Hintere Divisio des Tr. superior'],['ia','Vordere Divisio des Tr. inferior']];
+const SONO_KEYS=['isb','scb','infra','ax','fa'];
+const SONO_ASK=SONO_KEYS.flatMap(k=>SONO[k].it.filter(u=>u.lx!=null&&!['pl2'].includes(u.id)).map(u=>({k,id:u.id,name:u.name})));
+const qz={mode:'mc',i:0,right:0,seen:0,order:[],ans:null,cur:null};
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function qStart(m){qz.mode=m;qz.i=0;qz.right=0;qz.seen=0;qz.ans=null;qz.order=shuffle(m==='mc'?MC.map((_,i)=>i):m==='sch'?SCHEMA_ASK.map((_,i)=>i):SONO_ASK.map((_,i)=>i));viewQuiz()}
+function viewQuiz(){
+  if(!qz.order.length)qStart('mc');
+  const best=store.get('plexus-best',{});
+  const total=qz.order.length,done=qz.i>=total;
+  let body='';
+  if(done){const pc=Math.round(100*qz.right/total);if(!best[qz.mode]||pc>best[qz.mode]){best[qz.mode]=pc;store.set('plexus-best',best)}
+    body=`<div class="card"><h2>${qz.right} von ${total} richtig (${pc} %)</h2><p>Bisher bestes Ergebnis in diesem Modus: ${best[qz.mode]} %.</p><button class="btn" data-q="restart">Noch einmal</button></div>`;
+  }else if(qz.mode==='mc'){const q=MC[qz.order[qz.i]];if(!qz.cur||qz.cur.q!==q)qz.cur={q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))};
+    body=`<div class="card"><div class="score">Frage ${qz.i+1}/${total} · ${qz.right} richtig</div><p class="ask">${q.q}</p><div class="q-opts">${qz.cur.opts.map((o,i)=>`<button data-opt="${i}" ${qz.ans!=null?'disabled':''} class="${qz.ans==null?'':o.ok?'right':(qz.ans===i?'wrong':'')}">${o.t}</button>`).join('')}</div>
+    ${qz.ans!=null?`<div class="tip">${q.w}</div><p style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-q="next">Weiter</button><button class="btn ghost" data-nerve="${q.n}">Im Schema zeigen</button></p>`:''}</div>`;
+  }else if(qz.mode==='sch'){const[id,txt]=SCHEMA_ASK[qz.order[qz.i]];
+    body=`<div class="card" style="margin-bottom:10px"><div class="score">${qz.i+1}/${total} · ${qz.right} richtig</div><p class="ask">Klicke: ${txt}</p>${qz.ans?`<div class="${qz.ans==='ok'?'tip':'warn'}">${qz.ans==='ok'?'Richtig.':'Die richtige Stelle ist grün markiert.'} ${N[id].full||N[id].l}</div><button class="btn" data-q="next">Weiter</button>`:''}</div><div class="fig schema" id="qS">${schemaSVG(true)}</div>`;
+  }else{const a=SONO_ASK[qz.order[qz.i]];
+    body=`<div class="card" style="margin-bottom:10px"><div class="score">${qz.i+1}/${total} · ${qz.right} richtig</div><p class="ask">Zeig: ${a.name}</p><p class="note">${SONO[a.k].h}</p>${qz.ans?`<div class="${qz.ans==='ok'?'tip':'warn'}">${fmt(SONO[a.k].it.find(u=>u.id===a.id).i||'')}</div><button class="btn" data-q="next">Weiter</button>`:''}</div>
+    <div class="sono" style="max-width:640px" id="qU">${sonoSVG(a.k,{labels:false,blind:true})}</div>`;
+  }
+  $('#view').innerHTML=`<div class="bar"><span class="lbl">Modus</span><button class="chip" data-mode="mc" aria-pressed="${qz.mode==='mc'}">Fälle (${MC.length})</button><button class="chip" data-mode="sch" aria-pressed="${qz.mode==='sch'}">Schema blind (${SCHEMA_ASK.length})</button><button class="chip" data-mode="sono" aria-pressed="${qz.mode==='sono'}">Sono blind (${SONO_ASK.length})</button></div>${body}`;
+  const qs=$('#qS');if(qs&&!done){const[id]=SCHEMA_ASK[qz.order[qz.i]];
+    if(qz.ans){const g=$(`[data-id="${id}"]`,qs);g.classList.add('q-right','rv');if(qz.wrong&&qz.wrong!==id){const w=$(`[data-id="${qz.wrong}"]`,qs);w&&w.classList.add('q-wrong','rv')}}
+    qs.addEventListener('click',e=>{if(qz.ans)return;const g=e.target.closest('[data-id]');if(!g)return;qz.wrong=g.dataset.id;qz.ans=g.dataset.id===id?'ok':'no';if(qz.ans==='ok')qz.right++;viewQuiz()})}
+  const qu=$('#qU');if(qu&&!done){const a=SONO_ASK[qz.order[qz.i]];
+    if(qz.ans){$(`[data-u="${a.id}"]`,qu).classList.add('q-right');if(qz.wrong&&qz.wrong!==a.id){const w=$(`[data-u="${qz.wrong}"]`,qu);w&&w.classList.add('q-wrong')}}
+    qu.addEventListener('click',e=>{if(qz.ans)return;const g=e.target.closest('[data-u]');if(!g||g.classList.contains('fat'))return;qz.wrong=g.dataset.u;qz.ans=g.dataset.u===a.id?'ok':'no';if(qz.ans==='ok')qz.right++;viewQuiz()})}
+}
+
+/* ---------- Routing und Ereignisse ---------- */
+const VIEWS={schema:viewSchema,anatomie:viewAnat,bloecke:viewBlocks,quiz:viewQuiz};
+function go(tab,push=true){
+  state.tab=VIEWS[tab]?tab:'schema';
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===state.tab));
+  if(push&&location.hash.slice(1)!==state.tab){try{history.replaceState(null,'','#'+state.tab)}catch(e){location.hash=state.tab}}
+  VIEWS[state.tab]();
+}
+document.addEventListener('click',e=>{
+  const t=e.target;let g;
+  if(g=t.closest('nav.tabs button'))return go(g.dataset.tab);
+  if(g=t.closest('[data-goto]'))return go(g.dataset.goto);
+  if(g=t.closest('[data-nerve]')){state.sel=g.dataset.nerve;state.level=null;return go('schema')}
+  if(g=t.closest('[data-sono]')){state.stop=+g.dataset.sono;state.sel=STOPS[state.stop].target;state.pick=null;return go('anatomie')}
+  if(state.tab==='schema'){
+    if(g=t.closest('.reach [data-block],[data-block].chip')){state.block=g.dataset.block||null;state.level=null;if(g.closest('.reach'))state.sel=null;else if(state.block)state.sel=null;refreshSchema();return}
+    if(g=t.closest('[data-rul]')){state.block=state.block===g.dataset.rul?null:g.dataset.rul;state.sel=null;state.level=null;refreshSchema();return}
+    if(g=t.closest('[data-col]')){state.level=state.level===g.dataset.col?null:g.dataset.col;state.sel=null;refreshSchema();return}
+    if(g=t.closest('#sch [data-id]')){state.sel=state.sel===g.dataset.id?null:g.dataset.id;state.level=null;refreshSchema();return}
+    if(t.closest('#sch')&&!t.closest('[data-id]')){state.sel=null;state.level=null;refreshSchema();return}
+  }
+  if(state.tab==='anatomie'){
+    if(g=t.closest('.reach [data-block]')){state.block=g.dataset.block;return go('bloecke')}
+    if(g=t.closest('[data-stop]'))return setStop(+g.dataset.stop);
+    if(g=t.closest('#an [data-id]')){state.sel=state.sel===g.dataset.id?null:g.dataset.id;viewAnat();return}
+  }
+  if(state.tab==='bloecke'){
+    if(g=t.closest('[data-op]')){state.finder=g.dataset.op;state.block=OPS[g.dataset.op].b;return viewBlocks()}
+    if(g=t.closest('[data-r]')){state.mapPick=g.dataset.r;const k=g.dataset.r,st=BLOCKS[state.block].cov[k]||'N';viewBlocks();$('#mapCap').innerHTML=`<strong>${N[k].full||N[k].l}:</strong> ${({F:'zuverlässig blockiert',P:'variabel',N:'nicht erreicht',S:'Risiko'})[st]}. <button class="chip" data-nerve="${k}">Im Schema zeigen</button>`;return}
+    if(g=t.closest('[data-block]')){state.block=g.dataset.block;state.mapPick=null;return viewBlocks()}
+  }
+  if(state.tab==='quiz'){
+    if(g=t.closest('[data-mode]'))return qStart(g.dataset.mode);
+    if(g=t.closest('[data-opt]')){if(qz.ans!=null)return;qz.ans=+g.dataset.opt;if(qz.cur.opts[qz.ans].ok)qz.right++;return viewQuiz()}
+    if(g=t.closest('[data-q]')){if(g.dataset.q==='next'){qz.i++;qz.ans=null;qz.wrong=null;qz.cur=null;return viewQuiz()}return qStart(qz.mode)}
+  }
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[tabindex="0"][role="button"],.r')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+window.addEventListener('hashchange',()=>go(location.hash.slice(1),false));
+go(location.hash.slice(1)||'schema',false);
+</script>
+
+</body>
+</html>

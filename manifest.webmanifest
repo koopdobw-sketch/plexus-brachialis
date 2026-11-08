@@ -1,0 +1,11 @@
+{
+  "name": "Plexus brachialis Atlas",
+  "short_name": "Plexus",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1215",
+  "theme_color": "#0b1215",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
